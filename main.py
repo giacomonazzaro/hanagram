@@ -14,6 +14,10 @@ class BotServer(object):
 
 server = None
 
+def add_player(server, chat_id, user_id, name):
+    server.games[chat_id]['playermap'][user_id] = name
+    print(name, 'joined')
+
 def handle_message(message_object):
     print(message_object)
     print()
@@ -29,18 +33,30 @@ def handle_message(message_object):
 
     if text.startswith('/join'):
         name = text[len('/join'):]
-        server.games[chat_id]['playermap'][user_id] = name
-        print(name, 'joined')
+        add_player(server, chat_id, user_id, name)
 
     if text == '/create_game':
         server.games[chat_id] = {'game': None, 'playermap': {} }
-        # global_bot.sendMessage(chat_id, answer)
 
-    if text == '/start':
+    if text == '/start' or text == '/START':
+        if text == '/START':
+            server.games[chat_id] = {'game': None, 'playermap': {} }
+            for i, name in enumerate(['A', 'B', 'C']):
+                add_player(server, chat_id, i, name)
+
         players = []
         for key, value in server.games[chat_id]['playermap'].items():
-            players.append(key)    
+            players.append(value)
+        print(players)
         server.games[chat_id]['game'] = hanabi.Game(players)
+        server.bot.sendMessage(chat_id, "Game sarted!")
+
+        board_state = ''
+        original = sys.stdout
+        sys.stdout = open(str(chat_id) + '.txt', 'a')
+        hanabi.print_board_state(server.games[chat_id]['game'])
+        sys.stdout = original
+
     
 
 def main(token):

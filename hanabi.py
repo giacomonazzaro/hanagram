@@ -223,28 +223,31 @@ def perform_action(game, player, action):
     
     return ok
 
+def print_board_state(game, seen_from=None):
+    for player in game.players:
+        print()
+        print_hand(game, player, player != seen_from, True)
+        print()
+    
+    for color in colors:
+        print(color + ': ' + str(game.piles[color]) + '  ' + str(game.discarded[color]))
+    print()
+    
+    score = 0
+    for color, value in game.piles.items():
+        score += value
+
+    print('hints: ' + str(game.hints) + ', errors: ' + str(game.errors))
+    print('score: ' + str(score) + ', deck: ' + str(len(game.deck)))
+    print()
+
 
 def main():
     players = ['A', 'B']
     game = Game(players)
 
     while True:
-        for i, player in enumerate(game.players):
-            print()
-            print_hand(game, player, i != game.active_player, True)
-            print()
-        
-        for color in colors:
-            print(color + ': ' + str(game.piles[color]) + '  ' + str(game.discarded[color]))
-        print()
-        
-        score = 0
-        for color, value in game.piles.items():
-            score += value
-
-        print('hints: ' + str(game.hints) + ', errors: ' + str(game.errors))
-        print('score: ' + str(score) + ', deck: ' + str(len(game.deck)))
-        print()
+        print_board_state(game, game.players[game.active_player])
 
         result = check_state(game)
         if result > 0:
