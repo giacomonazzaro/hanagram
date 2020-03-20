@@ -122,14 +122,15 @@ def play_card(game, player, index):
     card = hand.pop(index - 1)
     success = False
     pile = game.piles[card.color]
+    
     if pile == 0:
         if card.value == 1:
             success = True
     else:
         if card.value == pile + 1:
-            success == True
-        if pile == 5:
-            game.hints = min(game.hints+1, 8)
+            success = True
+            if card.value == 5:
+                game.hints = min(game.hints+1, 8)
     
     if success:
         game.piles[card.color] += 1
