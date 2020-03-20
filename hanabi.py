@@ -28,6 +28,50 @@ def draw_card(hand, deck):
     hand_card = namedtuple('HandCard', 'color value is_color_known is_value_known not_colors not_values')(card.color, card.value, False, False, [], [])
     hand.append(hand_card)
 
+def discard_card(hand, index, discarded, clues):
+    discarded.append(hand.pop(index))
+    clues += 1
+
+def play_card(hand, index, discarded, piles, errors):
+    card = hand.pop(index)
+    pile = piles[card.color]
+    success = False
+    if len(pile) == 0:
+        if card.value == 1:
+            success = True
+    else:
+        if card.value == pile[-1] + 1:
+            success == True
+    
+    if success:
+        pile.append(card)
+    else:
+        errors += 1
+        discarded.append(card)
+
+def check_state(errors, players, piles):
+    if errors == 3:
+        return -1
+    
+    win = True
+    for pile in piles:
+        if pile[-1].value != 5:
+            win = False
+            break
+
+    if win: return -1
+
+    lost = True
+    for player, hand in player.items():
+        if len(hand) != 0:
+            lost = False
+            break
+
+    if lost: return -1 
+    
+    return 0
+
+
 def new_hand(deck):
     hand = []
     for _ in range(5):
@@ -55,9 +99,13 @@ def give_value_clue(hand, value):
             if value not in card.not_values:
                 card.not_values.append(value)
 
+
 def main():
     players = {'Giacomo': [], 'Gabriele': []}
     deck = new_deck()
+    discarded = []
+    errors = 0
+    clues = 0
     # print_deck(deck)
 
     for player, hand in players.items():
