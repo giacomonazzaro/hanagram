@@ -73,9 +73,9 @@ def new_hand(deck):
 
 
 def print_hand(game, player):
-    print(player + "'s hand:")
-    for card in game.hands[player]:
-        print(card)
+    print(player + " hand information:")
+    for i, card in enumerate(game.hands[player]):
+            print(str(i) + ':', card)
 
 def print_public_hand(game, player):
     print(player + "'s hand:")
@@ -105,6 +105,7 @@ def discard_card(game, player, index):
     card = hand.pop(index)
     game.discarded[card.color].append(card.value)
     game.hints += 1
+    draw_card(game.deck, hand)
 
 def play_card(game, player, index):
     hand = game.hands[player]
@@ -125,6 +126,9 @@ def play_card(game, player, index):
     else:
         errors += 1
         discarded.append(card)
+    
+    draw_card(game.deck, hand)
+
 
 def check_state(game):
     if game.errors == 3:
@@ -179,18 +183,45 @@ def give_hint(game, player, hint):
     game.hints -= 1
 
 
+def perform_action(game, player, action):
+    name, value = action.strip().split(' ', 1)
+    if name == 'discard':
+        discard_card(game, player, int(value))
+    elif name == 'play':
+        play_card(game, player, int(value))
+    elif name == 'hint':
+        other_player, hint = value.split(' ')
+        if not hint in colors:
+            give_hint(game, other_player, int(hint))
+        else:
+            give_hint(game, other_player, hint)
+    else:
+        print('Cannot parse action! Repeat please.')
+        return False
+
+    return True
+
+
 def main():
-    game = Game(['Giacomo', 'Gabriele'])
-    # print(game.deck)
-    print_public_hand(game, 'Giacomo')
-    print()
+    players = ['Giacomo', 'Gabriele']
+    game = Game(players)
 
-    give_hint(game, 'Giacomo', 'red')
-    print_hand(game, 'Giacomo')
-    print()
+    active = 0
+    while True:
+        for player in players:
+            print_public_hand(game, player)
+            print()
+            # print_hand(game, player)
+            # print()
 
-    discard_card(game, 'Giacomo', 3)
-    print_hand(game, 'Giacomo')
+        action = input(players[active] + "' turn: ")
+        success = perform_action(game, players[active], action)
+        if success:
+            active = (active + 1) % len(player)
+            print()
+            print('*****************')
+            print()
+
 
 
 
