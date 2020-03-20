@@ -8,7 +8,7 @@ Actions:
 - `hint <player name to hint> <color or value>`
 
 Examples
-`play 3`  
-`discard 1`  
-`hint Alice yellow`  
-`hint Bob 5`  
+- `play 3`  
+- `discard 1`  
+- `hint Alice yellow`  
+- `hint Bob 5`  
