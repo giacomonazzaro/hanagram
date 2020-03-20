@@ -59,7 +59,9 @@ class HandCard(Card):
 
 
 def draw_card(hand, deck):
-    # assert(len(hand) != 0)
+    if len(deck) == 0: 
+        return
+
     card = deck.pop();
     hand_card = HandCard(card.color, card.value)
     hand.append(hand_card)
@@ -101,15 +103,24 @@ class Game(object):
 
 
 def discard_card(game, player, index):
+    if index < 1 or index > 5:
+        return False
+
+    print('discarding', index)
+
     hand = game.hands[player]
-    card = hand.pop(index)
+    card = hand.pop(index - 1)
     game.discarded[card.color].append(card.value)
     game.hints += 1
-    draw_card(game.deck, hand)
+    draw_card(hand, game.deck)
+    return True
 
 def play_card(game, player, index):
+    if index < 1 or index > 5:
+        return False
+
     hand = game.hands[player]
-    card = hand.pop(index)
+    card = hand.pop(index - 1)
     pile = game.piles[card.color]
     success = False
     if pile == 0:
@@ -124,10 +135,12 @@ def play_card(game, player, index):
     if success:
         pile += 1
     else:
-        errors += 1
-        discarded.append(card)
+        game.errors += 1
+        game.discarded[card.color].append(card.value)
     
-    draw_card(game.deck, hand)
+    draw_card(hand, game.deck)
+
+    return True
 
 
 def check_state(game):
@@ -185,21 +198,26 @@ def give_hint(game, player, hint):
 
 def perform_action(game, player, action):
     name, value = action.strip().split(' ', 1)
+    ok = False
     if name == 'discard':
-        discard_card(game, player, int(value))
+        ok = discard_card(game, player, int(value.strip()))
+    
     elif name == 'play':
-        play_card(game, player, int(value))
+        ok = play_card(game, player, int(value.strip()))
+    
     elif name == 'hint':
         other_player, hint = value.split(' ')
+        if other_player not in game.hands.keys():
+            return False
         if not hint in colors:
-            give_hint(game, other_player, int(hint))
+            ok = give_hint(game, other_player, int(hint))
         else:
-            give_hint(game, other_player, hint)
-    else:
-        print('Cannot parse action! Repeat please.')
-        return False
+            ok = give_hint(game, other_player, hint)
 
-    return True
+    if not ok:
+        print('Invalid action. Please repeat.')
+    
+    return ok
 
 
 def main():
@@ -207,17 +225,21 @@ def main():
     game = Game(players)
 
     active = 0
+    ok = True
     while True:
-        for player in players:
-            print_public_hand(game, player)
-            print()
-            # print_hand(game, player)
-            # print()
+        if ok:
+            for player in players:
+                print_public_hand(game, player)
+                print()
+                print_hand(game, player)
+                print()
 
-        action = input(players[active] + "' turn: ")
-        success = perform_action(game, players[active], action)
-        if success:
-            active = (active + 1) % len(player)
+        action = input(players[active] + ': ')
+        ok = perform_action(game, players[active], action)
+        if ok:
+            active += 1
+            if active == len(players):
+                active = 0
             print()
             print('*****************')
             print()
