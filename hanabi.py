@@ -1,5 +1,6 @@
 from collections import namedtuple
 from sys import getsizeof
+from random import shuffle
 
         
 colors = ['white', 'red', 'blue', 'green', 'yellow']
@@ -12,6 +13,8 @@ for color in colors:
         if i == 5: count = 1
         for _ in range(count):
             deck.append(namedtuple('Card', 'color value')(color, i))
+
+shuffle(deck)
 
 def main():
     for card in deck:
