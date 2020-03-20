@@ -32,7 +32,7 @@ def discard_card(hand, index, discarded, clues):
     discarded.append(hand.pop(index))
     clues += 1
 
-def play_card(hand, index, discarded, piles, errors):
+def play_card(hand, index, discarded, piles, errors, clues):
     card = hand.pop(index)
     pile = piles[card.color]
     success = False
@@ -42,6 +42,8 @@ def play_card(hand, index, discarded, piles, errors):
     else:
         if card.value == pile[-1] + 1:
             success == True
+        if card.value == 5:
+            clues += 1
     
     if success:
         pile.append(card)
