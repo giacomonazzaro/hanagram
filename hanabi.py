@@ -243,7 +243,8 @@ def main():
             for color, value in game.piles.items():
                 score += value
 
-            print('hints:', game.hints, 'errors:', game.errors, 'score:', score)
+            print('hints: ' + str(game.hints) + ', errors: ' + str(game.errors))
+            print('score: ' + str(score) + ', deck: ' + str(len(game.deck)))
             print()
 
             result = check_state(game)
@@ -260,7 +261,7 @@ def main():
             if active == len(players):
                 active = 0
             print()
-            print('*****************')
+            print('    *****************')
             print()
 
 
