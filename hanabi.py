@@ -1,18 +1,7 @@
 from random import shuffle
-        
+from collections import namedtuple  
+
 colors = ['white', 'red', 'blue', 'green', 'yellow']
-
-class Card(object):
-    def __init__(self, color, value):
-        self.color = color        
-        self.value = value 
-
-    def __str__(self):
-        return self.color + ' ' + str(self.value)
-    
-    def __repr__(self):
-        return self.__str__()
-
 
 def new_deck():
     deck = [];        
@@ -22,13 +11,13 @@ def new_deck():
             if i == 1: count = 3
             if i == 5: count = 1
             for _ in range(count):
-                deck.append(Card(color, i))
+                deck.append(namedtuple('Card', 'color value')(color, i))
 
     shuffle(deck)
     return deck
 
 
-class HandCard(Card):
+class HandCard(object):
     def __init__(self, color, value):
         self.color = color        
         self.value = value 
