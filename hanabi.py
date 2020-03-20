@@ -37,25 +37,33 @@ class HandCard(Card):
         self.not_colors = []
         self.not_values = []
 
-    def __str__(self):
-        result = ''
-        
-        if self.is_color_known or self.is_value_known:
-            result = 'is: '
-            if self.is_color_known: result += self.color + ' '
-            if self.is_value_known: result += str(self.value) + ' '
-        
-        if len(self.not_colors) > 0 or len(self.not_values) > 0:
-            result += 'not: '
-            if len(self.not_colors) > 0 :
-                result += str(self.not_colors)
-            if len(self.not_values) > 0 :
-                result += str(self.not_values)
+def to_string(card, show_value, show_info):
+    info = []
+    result = ''
+    if show_value:
+        result += card.color + ' ' + str(card.value)
 
-        return result
+    if show_info: 
+        if card.is_color_known or card.is_value_known:
+            if card.is_color_known: info.append(card.color)
+            if card.is_value_known: info.append(str(card.value))
+        
+        for color in card.not_colors:
+            info.append('not ' + color)
+        for value in card.not_values:
+            info.append('not ' + str(value))
+
+    if len(info) > 0:
+        if show_value:
+            result += ',  info: '
+        result += '{'
+        for i in range(len(info) - 1):
+            result += info[i]
+            result += ', '
+        result += info[-1]
+        result += '}' 
     
-    def __repr__(self):
-        return self.__str__()
+    return result
 
 
 def draw_card(hand, deck):
@@ -74,15 +82,11 @@ def new_hand(deck):
     return hand
 
 
-def print_hand(game, player):
-    print(player + " hand information:")
-    for i, card in enumerate(game.hands[player]):
-            print(str(i + 1) + ':', card)
-
-def print_public_hand(game, player):
+def print_hand(game, player, show_value, show_info):
     print(player + "'s hand:")
-    for card in game.hands[player]:
-        print(card.color + ' ' + str(card.value))
+    for i, card in enumerate(game.hands[player]):
+        s = to_string(card, show_value, show_info)
+        print('[' + str(i + 1) + ']:', s)
 
 
 class Game(object):
@@ -196,6 +200,11 @@ def give_hint(game, player, hint):
     game.hints -= 1
     return True
 
+def concatenate(result, l, f, c):
+    for i in range(len(l) - 1):
+        f(result, l[i])
+        c(result)
+    f(result, l[-1])
 
 def perform_action(game, player, action):
     name, value = action.strip().split(' ', 1)
@@ -222,17 +231,16 @@ def perform_action(game, player, action):
 
 
 def main():
-    players = ['Giacomo', 'Gabriele']
+    players = ['A', 'B']
     game = Game(players)
 
     active = 0
     ok = True
     while True:
         if ok:
-            for player in players:
-                print_public_hand(game, player)
+            for i, player in enumerate(players):
                 print()
-                print_hand(game, player)
+                print_hand(game, player, i != active, True)
                 print()
             
             for color in colors:
