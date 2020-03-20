@@ -153,10 +153,10 @@ def check_state(game):
             win = False
             break
 
-    if win: return -1
+    if win: return 1
 
     lost = True
-    for player, hand in game.hands:
+    for player, hand in game.hands.items():
         if len(hand) != 0:
             lost = False
             break
@@ -238,7 +238,20 @@ def main():
             for color in colors:
                 print(color + ': ' + str(game.piles[color]) + '  ' + str(game.discarded[color]))
             print()
+            
+            score = 0
+            for color, value in game.piles.items():
+                score += value
 
+            print('hints:', game.hints, 'errors:', game.errors, 'score:', score)
+            print()
+
+            result = check_state(game)
+            if result > 0:
+                print('*** You win! ***')
+            elif result < 0:
+                print('*** You lost! ***')
+                break
 
         action = input(players[active] + ': ')
         ok = perform_action(game, players[active], action)
@@ -249,6 +262,7 @@ def main():
             print()
             print('*****************')
             print()
+
 
 
 
