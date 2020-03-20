@@ -224,45 +224,41 @@ def main():
     game = Game(players)
 
     active = 0
-    ok = True
     while True:
-        if ok:
-            for i, player in enumerate(players):
+        for i, player in enumerate(players):
+            print()
+            print_hand(game, player, i != active, True)
+            print()
+        
+        for color in colors:
+            print(color + ': ' + str(game.piles[color]) + '  ' + str(game.discarded[color]))
+        print()
+        
+        score = 0
+        for color, value in game.piles.items():
+            score += value
+
+        print('hints: ' + str(game.hints) + ', errors: ' + str(game.errors))
+        print('score: ' + str(score) + ', deck: ' + str(len(game.deck)))
+        print()
+
+        result = check_state(game)
+        if result > 0:
+            print('*** You win! ***')
+        elif result < 0:
+            print('*** You lost! ***')
+            break
+
+        ok = False
+        while not ok:
+            action = input(players[active] + ': ')
+            ok = perform_action(game, players[active], action)
+            if ok:
+                active += 1
+                if active == len(players): active = 0
                 print()
-                print_hand(game, player, i != active, True)
+                print('    *****************')
                 print()
-            
-            for color in colors:
-                print(color + ': ' + str(game.piles[color]) + '  ' + str(game.discarded[color]))
-            print()
-            
-            score = 0
-            for color, value in game.piles.items():
-                score += value
-
-            print('hints: ' + str(game.hints) + ', errors: ' + str(game.errors))
-            print('score: ' + str(score) + ', deck: ' + str(len(game.deck)))
-            print()
-
-            result = check_state(game)
-            if result > 0:
-                print('*** You win! ***')
-            elif result < 0:
-                print('*** You lost! ***')
-                break
-
-        action = input(players[active] + ': ')
-        ok = perform_action(game, players[active], action)
-        if ok:
-            active += 1
-            if active == len(players):
-                active = 0
-            print()
-            print('    *****************')
-            print()
-
-
-
 
 
 if __name__ == '__main__':
