@@ -77,7 +77,7 @@ def new_hand(deck):
 def print_hand(game, player):
     print(player + " hand information:")
     for i, card in enumerate(game.hands[player]):
-            print(str(i) + ':', card)
+            print(str(i + 1) + ':', card)
 
 def print_public_hand(game, player):
     print(player + "'s hand:")
@@ -121,8 +121,8 @@ def play_card(game, player, index):
 
     hand = game.hands[player]
     card = hand.pop(index - 1)
-    pile = game.piles[card.color]
     success = False
+    pile = game.piles[card.color]
     if pile == 0:
         if card.value == 1:
             success = True
@@ -133,7 +133,7 @@ def play_card(game, player, index):
             game.hints += 1
     
     if success:
-        pile += 1
+        game.piles[card.color] += 1
     else:
         game.errors += 1
         game.discarded[card.color].append(card.value)
@@ -191,9 +191,10 @@ def give_hint(game, player, hint):
     elif type(hint) is int:
         give_value_hint(hand, hint)
     else:
-        assert(0)
+        return False
 
     game.hints -= 1
+    return True
 
 
 def perform_action(game, player, action):
@@ -233,6 +234,11 @@ def main():
                 print()
                 print_hand(game, player)
                 print()
+            
+            for color in colors:
+                print(color + ': ' + str(game.piles[color]) + '  ' + str(game.discarded[color]))
+            print()
+
 
         action = input(players[active] + ': ')
         ok = perform_action(game, players[active], action)
