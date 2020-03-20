@@ -19,7 +19,7 @@ def new_deck():
 
 class HandCard(object):
     def __init__(self, color, value):
-        self.color = color        
+        self.color = color    
         self.value = value 
         self.is_color_known = False
         self.is_value_known = False
@@ -58,7 +58,7 @@ def draw_card(hand, deck):
     if len(deck) == 0: 
         return
 
-    card = deck.pop();
+    card = deck.pop()
     hand_card = HandCard(card.color, card.value)
     hand.append(hand_card)
 
@@ -79,12 +79,14 @@ def print_hand(game, player, show_value, show_info):
 
 class Game(object):
     def __init__(self, player_names):
+        self.player_names = player_names
         self.deck = new_deck()
         self.discarded = {}
         self.errors = 0
         self.hints = 8
         self.hands = {}
         self.piles = {}
+        self.final_moves = 0
         
         for color in colors:
             self.discarded[color] = []
@@ -103,7 +105,11 @@ def discard_card(game, player, index):
     hand = game.hands[player]
     card = hand.pop(index - 1)
     game.discarded[card.color].append(card.value)
-    game.hints += 1
+    game.hints = min(game.hints+1, 8)
+
+    if len(game.deck) == 0:
+        game.final_moves += 1
+
     draw_card(hand, game.deck)
     return True
 
@@ -122,7 +128,7 @@ def play_card(game, player, index):
         if card.value == pile + 1:
             success == True
         if pile == 5:
-            game.hints += 1
+            game.hints = min(game.hints+1, 8)
     
     if success:
         game.piles[card.color] += 1
@@ -130,6 +136,9 @@ def play_card(game, player, index):
         game.errors += 1
         game.discarded[card.color].append(card.value)
     
+    if len(game.deck) == 0:
+        game.final_moves += 1
+
     draw_card(hand, game.deck)
 
     return True
@@ -147,13 +156,8 @@ def check_state(game):
 
     if win: return 1
 
-    lost = True
-    for player, hand in game.hands.items():
-        if len(hand) != 0:
-            lost = False
-            break
-
-    if lost: return -1 
+    if len(game.deck) == 0 and game.final_moves == len(game.player_names):
+        return -1
     
     return 0
 
@@ -188,6 +192,8 @@ def give_hint(game, player, hint):
         return False
 
     game.hints -= 1
+    if len(game.deck) == 0:
+        game.final_moves += 1
     return True
 
 def concatenate(result, l, f, c):
@@ -224,11 +230,11 @@ def main():
     players = ['A', 'B']
     game = Game(players)
 
-    active = 0
+    turn = 0
     while True:
         for i, player in enumerate(players):
             print()
-            print_hand(game, player, i != active, True)
+            print_hand(game, player, i != turn, True)
             print()
         
         for color in colors:
@@ -252,11 +258,11 @@ def main():
 
         ok = False
         while not ok:
-            action = input(players[active] + ': ')
-            ok = perform_action(game, players[active], action)
+            action = input(players[turn] + ': ')
+            ok = perform_action(game, players[turn], action)
             if ok:
-                active += 1
-                if active == len(players): active = 0
+                turn += 1
+                if turn == len(players): turn = 0
                 print()
                 print('    *****************')
                 print()
