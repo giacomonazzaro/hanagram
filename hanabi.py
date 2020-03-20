@@ -33,9 +33,8 @@ def to_string(card, show_value, show_info):
         result += card.color + ' ' + str(card.value)
 
     if show_info: 
-        if card.is_color_known or card.is_value_known:
-            if card.is_color_known: info.append(card.color)
-            if card.is_value_known: info.append(str(card.value))
+        if card.is_color_known: info.append(card.color)
+        if card.is_value_known: info.append(str(card.value))
         
         for color in card.not_colors:
             info.append('not ' + color)
@@ -44,7 +43,7 @@ def to_string(card, show_value, show_info):
 
     if len(info) > 0:
         if show_value:
-            result += ',  info: '
+            result += ', '
         result += '{'
         for i in range(len(info) - 1):
             result += info[i]
@@ -163,6 +162,7 @@ def give_color_hint(hand, color):
     for card in hand:
         if card.color == color:
             card.is_color_known = True
+            card.not_colors = []
         else:
             if color not in card.not_colors:
                 card.not_colors.append(color)
@@ -171,6 +171,7 @@ def give_value_hint(hand, value):
     for card in hand:
         if card.value == value:
             card.is_value_known = True
+            card.not_values = []
         else:
             if value not in card.not_values:
                 card.not_values.append(value)
