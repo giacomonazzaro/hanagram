@@ -100,12 +100,21 @@ def give_value_clue(hand, value):
                 card.not_values.append(value)
 
 
+def give_clue(hand, clue, is_color_clue, clues):
+    assert(clues > 0)
+    if is_color_clue:
+        give_color_clue(hand, clue)
+    else:
+        give_value_clue(hand, clue)
+    clues -= 1
+
+
 def main():
     players = {'Giacomo': [], 'Gabriele': []}
     deck = new_deck()
     discarded = []
     errors = 0
-    clues = 0
+    clues = 8
     # print_deck(deck)
 
     for player, hand in players.items():
