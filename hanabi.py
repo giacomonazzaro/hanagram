@@ -79,7 +79,7 @@ def print_hand(game, player, show_value, show_info):
 
 class Game(object):
     def __init__(self, player_names):
-        self.player_names = player_names
+        self.players = player_names
         self.deck = new_deck()
         self.discarded = {}
         self.errors = 0
@@ -87,6 +87,7 @@ class Game(object):
         self.hands = {}
         self.piles = {}
         self.final_moves = 0
+        self.active_player = 0
         
         for color in colors:
             self.discarded[color] = []
@@ -227,11 +228,10 @@ def main():
     players = ['A', 'B']
     game = Game(players)
 
-    turn = 0
     while True:
-        for i, player in enumerate(players):
+        for i, player in enumerate(game.players):
             print()
-            print_hand(game, player, i != turn, True)
+            print_hand(game, player, i != game.active_player, True)
             print()
         
         for color in colors:
@@ -255,11 +255,11 @@ def main():
 
         ok = False
         while not ok:
-            action = input(players[turn] + ': ')
-            ok = perform_action(game, players[turn], action)
+            action = input(players[game.active_player] + ': ')
+            ok = perform_action(game, players[game.active_player], action)
             if ok:
-                turn += 1
-                if turn == len(players): turn = 0
+                game.active_player += 1
+                if game.active_player == len(players): game.active_player = 0
                 print()
                 print('    *****************')
                 print()
