@@ -51,7 +51,6 @@ def handle_message(message_object):
         server.games[chat_id]['game'] = hanabi.Game(players)
         server.bot.sendMessage(chat_id, "Game sarted!")
 
-        board_state = ''
         original = sys.stdout
         sys.stdout = open(str(chat_id) + '.txt', 'a')
         hanabi.print_board_state(server.games[chat_id]['game'])
