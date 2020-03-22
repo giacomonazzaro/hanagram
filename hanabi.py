@@ -154,7 +154,7 @@ def check_state(game):
 
     if win: return 1
 
-    if len(game.deck) == 0 and game.final_moves == len(game.player_names):
+    if len(game.deck) == 0 and game.final_moves == len(game.players):
         return -1
     
     return 0
