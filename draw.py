@@ -35,21 +35,21 @@ def draw_board_state(game, player_viewing, filename):
     text_fill = (200, 200, 200)
     # piles
     x = 20
-    draw.text((x, 10), 'Hints: ' + str(game.hints) , font=text_font, fill=text_fill)
-    draw.text((x + 100-10, 10), 'Errors: ' + str(game.errors) , font=text_font, fill=text_fill)
-    draw.text((x + 200-10, 10), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
-    draw.text((x + 300-10, 10), 'Score: ' + str(hanabi.get_score(game)), font=text_font, fill=text_fill)
+    draw.text((x, 25), 'Hints: ' + str(game.hints) , font=text_font, fill=text_fill)
+    draw.text((x + 100-10, 25), 'Errors: ' + str(game.errors) , font=text_font, fill=text_fill)
+    draw.text((x + 200-10, 25), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
+    draw.text((x + 300-10, 25), 'Score: ' + str(hanabi.get_score(game)), font=text_font, fill=text_fill)
 
     left_margin = 35
     x = left_margin
-    y = 50
+    y = 65
     for color in hanabi.colors:
       value = game.piles[color]
       if value == 0:
         value = ''
       else:
         value = str(value)
-      render_card(draw, x, 50, color, value)
+      render_card(draw, x, y, color, value)
       xx = x
       for discarded in sorted(game.discarded[color]):
         draw.text((xx, y + 70), str(discarded), font=text_font, fill=(255,255,255))
