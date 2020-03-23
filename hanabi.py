@@ -225,6 +225,12 @@ def perform_action(game, player, action):
     
     return ok
 
+def get_score(game):
+    score = 0
+    for color, value in game.piles.items():
+        score += value
+    return score
+
 def print_board_state(game, seen_from=None):
     for player in game.players:
         print()
@@ -235,10 +241,7 @@ def print_board_state(game, seen_from=None):
         print(color + ': ' + str(game.piles[color]) + '  ' + str(game.discarded[color]))
     print()
     
-    score = 0
-    for color, value in game.piles.items():
-        score += value
-
+    score = get_score(game)
     print('hints: ' + str(game.hints) + ', errors: ' + str(game.errors))
     print('score: ' + str(score) + ', deck: ' + str(len(game.deck)))
     print()

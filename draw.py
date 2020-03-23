@@ -37,8 +37,9 @@ def draw_board_state(game, player_viewing, filename):
     # piles
     x = 20
     draw.text((x, 10), 'Hints: ' + str(game.hints) , font=text_font, fill=text_fill)
-    draw.text((x + 130, 10), 'Errors: ' + str(game.errors) , font=text_font, fill=text_fill)
-    draw.text((x + 250, 10), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
+    draw.text((x + 100-10, 10), 'Errors: ' + str(game.errors) , font=text_font, fill=text_fill)
+    draw.text((x + 200-10, 10), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
+    draw.text((x + 300-10, 10), 'Score: ' + str(hanabi.get_score(game)), font=text_font, fill=text_fill)
 
     y = 50
     for color in hanabi.colors:
