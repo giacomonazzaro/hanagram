@@ -1,9 +1,11 @@
 import hanabi
 from PIL import Image, ImageDraw, ImageFont
 
-card_font = ImageFont.truetype('Avenir.ttc', 50)
-text_font = ImageFont.truetype('Avenir.ttc', 20)
-text_font_small = ImageFont.truetype('Avenir.ttc', 10)
+size = 1/3
+card_font = ImageFont.truetype('Avenir.ttc', int(50/size))
+text_font = ImageFont.truetype('Avenir.ttc', int(20/size))
+text_font_small = ImageFont.truetype('Avenir.ttc', int(10/size))
+
 colors_rbg = {'red': (230, 20, 20),
               'green': (50, 150, 50),
               'blue': (50, 100, 250),
@@ -13,36 +15,36 @@ colors_rbg = {'red': (230, 20, 20),
 
 
 def render_card(image, x, y, color, value):
-    width = 50
+    width = 50/size
     image.rectangle((x, y, x + width, y + width * 1.3), fill=colors_rbg[color])
     text_fill = (0, 0, 0)
     # if color == 'black': text_fill = (255, 255, 255)
     image.text((x + width/4, y), value, font=card_font, fill=text_fill)
 
 def render_card_friend(image, x, y, color, value):
-    width = 50
-    height = 30
+    width = 50/size
+    height = 30/size
     image.rectangle((x, y, x + width, y + height), fill=colors_rbg[color])
     text_fill = (0, 0, 0)
     # if color == 'black': text_fill = (255, 255, 255)
     image.text((x + width/2.5, y + height/8), value, font=text_font, fill=text_fill)
 
 def draw_board_state(game, player_viewing, filename):
-    width = 400
+    width = int(400 / size)
     height = (width * 16) // 9
     image = Image.new('RGB', (width, height), (20, 20, 20))
     draw = ImageDraw.Draw(image)
     text_fill = (200, 200, 200)
     # piles
-    x = 20
-    draw.text((x, 25), 'Hints: ' + str(game.hints) , font=text_font, fill=text_fill)
-    draw.text((x + 100-10, 25), 'Errors: ' + str(game.errors) , font=text_font, fill=text_fill)
-    draw.text((x + 200-10, 25), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
-    draw.text((x + 300-10, 25), 'Score: ' + str(hanabi.get_score(game)), font=text_font, fill=text_fill)
+    x = 20 / size
+    draw.text((x, 25/size), 'Hints: ' + str(game.hints) , font=text_font, fill=text_fill)
+    draw.text((x + (100-10)/size, 25/size), 'Errors: ' + str(game.errors) , font=text_font, fill=text_fill)
+    draw.text((x + (200-10)/size, 25/size), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
+    draw.text((x + (300-10)/size, 25/size), 'Score: ' + str(hanabi.get_score(game)), font=text_font, fill=text_fill)
 
-    left_margin = 35
+    left_margin = 35/size
     x = left_margin
-    y = 65
+    y = 65/size
     for color in hanabi.colors:
       value = game.piles[color]
       if value == 0:
@@ -50,22 +52,22 @@ def draw_board_state(game, player_viewing, filename):
       else:
         value = str(value)
       render_card(draw, x, y, color, value)
-      xx = x
+      xx = x / size
       for discarded in sorted(game.discarded[color]):
-        draw.text((xx, y + 70), str(discarded), font=text_font, fill=(255,255,255))
-        xx += 15
-      x += 70
+        draw.text((xx, y + 70/size), str(discarded), font=text_font, fill=(255,255,255))
+        xx += 15/size
+      x += 70/size
 
     # hands
     for player in game.players:
       x = left_margin
-      y += 110
+      y += 110 / size
       draw.text((x, y), player, font=text_font, fill=text_fill)
       
       if player == game.players[game.active_player]:
-        draw.ellipse((x-20, y+8, x-10, y+18), fill=(255, 255, 255))
+        draw.ellipse((x-20/size, y+8/size, x-10/size, y+18/size), fill=(255, 255, 255))
       
-      y += 30
+      y += 30/size
       for card in game.hands[player]:
         color = card.color
         value = str(card.value)
@@ -76,23 +78,23 @@ def draw_board_state(game, player_viewing, filename):
         render_card(draw, x, y, color, value)
 
         if player_viewing == player:
-          yy = y + 5
-          xx = x + 5
+          yy = y + 5/size
+          xx = x + 5/size
 
           if not card.is_color_known:
             for not_color in card.not_colors:
-              draw.rectangle((xx, yy, xx + 10, yy + 5), fill=colors_rbg[not_color])
-              xx += 15
+              draw.rectangle((xx, yy, xx + 10/size, yy + 5/size), fill=colors_rbg[not_color])
+              xx += 15/size
       
-          xx = x + 5
-          yy = y + 50
+          xx = x + 5/size
+          yy = y + 50/size
           if not card.is_value_known:
             for not_value in card.not_values:
               draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
-              xx += 10
+              xx += 10/s
 
-        yy = y + 70
-        xx = x + 5
+        yy = y + 70/size
+        xx = x + 5/size
         if player_viewing != player:
           if not card.is_color_known: color = 'grey'
           if not card.is_value_known: value = ''
@@ -100,20 +102,20 @@ def draw_board_state(game, player_viewing, filename):
 
           if not card.is_color_known:
             for not_color in card.not_colors:
-              draw.rectangle((xx, yy + 2, xx + 10, yy + 6), fill=colors_rbg[not_color])
+              draw.rectangle((xx, yy + 2/size, xx + 10/size, yy + 6/size), fill=colors_rbg[not_color])
               xx += 15
             
           
-          xx = x + 5
-          yy += 15
+          xx = x + 5/size
+          yy += 15/size
           if not card.is_value_known:
             for not_value in card.not_values:
               draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
-              xx += 10
+              xx += 10/size
 
-        x += 70
+        x += 70/size
 
-      if player_viewing == player: y -= 30
+      if player_viewing == player: y -= 30/size
 
     
     image.save(filename)
