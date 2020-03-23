@@ -3,7 +3,7 @@ import sys
 from collections import namedtuple  
 import draw
 
-colors = ['red', 'blue', 'green', 'black', 'yellow']
+colors = ['red', 'blue', 'green', 'white', 'yellow']
 
 def new_deck():
     deck = [];        
@@ -65,9 +65,10 @@ def draw_card(hand, deck):
     hand.append(hand_card)
 
 
-def new_hand(deck):
+def new_hand(deck, num_cards):
+    assert(num_cards in [4,5])
     hand = []
-    for _ in range(5):
+    for _ in range(num_cards):
         draw_card(hand, deck)
     return hand
 
@@ -81,6 +82,7 @@ def print_hand(game, player, show_value, show_info):
 
 class Game(object):
     def __init__(self, player_names):
+        assert(len(player_names) >= 2 and len(player_names) <= 5)
         self.players = player_names
         self.deck = new_deck()
         self.discarded = {}
@@ -95,12 +97,13 @@ class Game(object):
             self.discarded[color] = []
             self.piles[color] = 0
 
+        num_cards = 5 if len(self.players) < 4 else 4
         for player in player_names:
-            self.hands[player] = new_hand(self.deck)
+            self.hands[player] = new_hand(self.deck, num_cards)
 
 
 def discard_card(game, player, index):
-    if index < 1 or index > 5:
+    if index < 1 or index > len(game.hands[player]):
         return False
 
     print('discarding', index)
@@ -117,7 +120,7 @@ def discard_card(game, player, index):
     return True
 
 def play_card(game, player, index):
-    if index < 1 or index > 5:
+    if index < 1 or index > len(game.hands[player]):
         return False
 
     hand = game.hands[player]
@@ -185,7 +188,7 @@ def give_hint(game, player, hint):
     assert(game.hints > 0)
     hand = game.hands[player]
     if type(hint) is str:
-        give_color_hint(hand, hint)
+        give_color_hint(hand, hint)       
     elif type(hint) is int:
         give_value_hint(hand, hint)
     else:
