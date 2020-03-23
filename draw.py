@@ -33,7 +33,6 @@ def draw_board_state(game, player_viewing, filename):
     image = Image.new('RGB', (width, height), (20, 20, 20))
     draw = ImageDraw.Draw(image)
     text_fill = (200, 200, 200)
-
     # piles
     x = 20
     draw.text((x, 10), 'Hints: ' + str(game.hints) , font=text_font, fill=text_fill)
@@ -41,6 +40,8 @@ def draw_board_state(game, player_viewing, filename):
     draw.text((x + 200-10, 10), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
     draw.text((x + 300-10, 10), 'Score: ' + str(hanabi.get_score(game)), font=text_font, fill=text_fill)
 
+    left_margin = 35
+    x = left_margin
     y = 50
     for color in hanabi.colors:
       value = game.piles[color]
@@ -57,9 +58,13 @@ def draw_board_state(game, player_viewing, filename):
 
     # hands
     for player in game.players:
-      x = 20
+      x = left_margin
       y += 110
       draw.text((x, y), player, font=text_font, fill=text_fill)
+      
+      if player == game.players[game.active_player]:
+        draw.ellipse((x-20, y+8, x-10, y+18), fill=(255, 255, 255))
+      
       y += 30
       for card in game.hands[player]:
         color = card.color
