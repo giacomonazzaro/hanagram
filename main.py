@@ -15,7 +15,13 @@ class BotServer(object):
 server = None
 
 def add_player(server, chat_id, user_id, name):
-    server.games[chat_id]['playermap'][user_id] = name
+    # TODO: Use default_dict to avoid this mess!
+    if not chat_id in server.games:
+        server.games[chat_id] = {}
+    if not 'playermap' in server.games[chat_id]:
+        server.games[chat_id]['playermap'] = {}
+
+    server.games[chat_id]['playermap'][name] = user_id
     print(name, 'joined')
 
 def handle_message(message_object):
