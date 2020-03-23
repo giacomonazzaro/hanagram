@@ -82,7 +82,6 @@ def draw_board_state(game, player_viewing, filename):
               draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
               xx += 10
 
-
         yy = y + 70
         xx = x + 5
         if player_viewing != player:
@@ -104,6 +103,8 @@ def draw_board_state(game, player_viewing, filename):
               xx += 10
 
         x += 70
+
+      if player_viewing == player: y -= 30
 
     
     image.save(filename)
