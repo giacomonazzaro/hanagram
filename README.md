@@ -2,10 +2,10 @@
 Telegram bot to play Hanabi with your friends.
 
 # Start a game
-Run
+Run  
 `python3 hanabi.py <names of players>`
 
-For example
+For example  
 `python3 hanabi.py Alice Bob Casey`
 
 # How to play
