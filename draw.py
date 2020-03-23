@@ -1,32 +1,119 @@
 import hanabi
 from PIL import Image, ImageDraw, ImageFont
 
-font = ImageFont.truetype('Avenir.ttc', 50)
-colors_rbg = {'red': (255, 0, 0),
-              'green': (100, 200, 100),
-              'blue': (0, 0, 255),
-              'yellow': (200, 200, 0),
-              'black': (10, 10, 10)}
+card_font = ImageFont.truetype('Avenir.ttc', 50)
+text_font = ImageFont.truetype('Avenir.ttc', 20)
+text_font_small = ImageFont.truetype('Avenir.ttc', 10)
+colors_rbg = {'red': (230, 20, 20),
+              'green': (50, 150, 50),
+              'blue': (50, 100, 250),
+              'yellow': (250, 200, 0),
+              'black': (230, 230, 230),
+              'grey': (100, 100, 100)}
 
-def draw_card(image, x, y, color, value):
+
+def render_card(image, x, y, color, value):
     width = 50
     image.rectangle((x, y, x + width, y + width * 1.3), fill=colors_rbg[color])
     text_fill = (0, 0, 0)
-    if color == 'black': text_fill = (255, 255, 255)
-    image.text((x + width/4, y), value, font=font, fill=text_fill)
+    # if color == 'black': text_fill = (255, 255, 255)
+    image.text((x + width/4, y), value, font=card_font, fill=text_fill)
 
+def render_card_friend(image, x, y, color, value):
+    width = 50
+    height = 30
+    image.rectangle((x, y, x + width, y + height), fill=colors_rbg[color])
+    text_fill = (0, 0, 0)
+    # if color == 'black': text_fill = (255, 255, 255)
+    image.text((x + width/2.5, y + height/8), value, font=text_font, fill=text_fill)
 
-
-def draw_board_state(filename):
-    image = Image.new('RGB', (400, (400 * 16) // 9), (255, 255, 255))
+def draw_board_state(game, player_viewing, filename):
+    width = 400
+    height = (width * 16) // 9
+    image = Image.new('RGB', (width, height), (20, 20, 20))
     draw = ImageDraw.Draw(image)
-    draw_card(draw, 20+ 0, 50, 'red', '1')
-    draw_card(draw, 20+ 70, 50, 'green', '2')
-    draw_card(draw, 20+ 140, 50, 'blue', '3')
-    draw_card(draw, 20+ 210, 50, 'yellow', '4')
-    draw_card(draw, 20+ 280, 50, 'black', '5')
+    text_fill = (200, 200, 200)
 
+    # piles
+    x = 20
+    draw.text((x, 10), 'Hints: ' + str(game.hints) , font=text_font, fill=text_fill)
+    draw.text((x + 130, 10), 'Errors: ' + str(game.errors) , font=text_font, fill=text_fill)
+    draw.text((x + 250, 10), 'Deck: ' + str(len(game.deck)) , font=text_font, fill=text_fill)
+
+    y = 50
+    for color in hanabi.colors:
+      value = game.piles[color]
+      if value == 0:
+        value = ''
+      else:
+        value = str(value)
+      render_card(draw, x, 50, color, value)
+      x += 70
+
+    # hands
+    for player in game.players:
+      x = 20
+      y += 110
+      draw.text((x, y), player, font=text_font, fill=text_fill)
+      y += 30
+      for card in game.hands[player]:
+        color = card.color
+        value = str(card.value)
+        if player == player_viewing:
+          if not card.is_color_known: color = 'grey'
+          if not card.is_value_known: value = ''
+
+        render_card(draw, x, y, color, value)
+
+        if player_viewing == player:
+          yy = y + 5
+          xx = x + 5
+
+          if not card.is_color_known:
+            for not_color in card.not_colors:
+              draw.rectangle((xx, yy, xx + 10, yy + 5), fill=colors_rbg[not_color])
+              xx += 15
+      
+          xx = x + 5
+          yy = y + 50
+          if not card.is_value_known:
+            for not_value in card.not_values:
+              draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
+              xx += 10
+
+
+        yy = y + 70
+        xx = x + 5
+        if player_viewing != player:
+          if not card.is_color_known: color = 'grey'
+          if not card.is_value_known: value = ''
+          render_card_friend(draw, x, yy, color, str(value))
+
+          if not card.is_color_known:
+            for not_color in card.not_colors:
+              draw.rectangle((xx, yy + 2, xx + 10, yy + 6), fill=colors_rbg[not_color])
+              xx += 15
+            
+          
+          xx = x + 5
+          yy += 15
+          if not card.is_value_known:
+            for not_value in card.not_values:
+              draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
+              xx += 10
+
+        x += 70
+
+    
     image.save(filename)
 
 if __name__ == '__main__':
-    draw_board_state('image.png')
+    game = hanabi.Game(['Giacomo', 'Gabriele'])
+    hanabi.give_hint(game, 'Gabriele', 'red')
+    hanabi.give_hint(game, 'Gabriele', 'blue')
+    hanabi.give_hint(game, 'Gabriele', 1)
+    hanabi.give_hint(game, 'Gabriele', 2)
+    # game.hands['Giacomo'][0].is_value_known = True
+    # game.hands['Giacomo'][0].not_values = [1, 2, 3]
+    # game.hands['Giacomo'][0].not_colors = ['red', 'blue', 'green']
+    draw_board_state(game, 'Giacomo', 'image.png')

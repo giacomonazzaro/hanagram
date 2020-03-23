@@ -1,7 +1,9 @@
 from random import shuffle
+import sys
 from collections import namedtuple  
+import draw
 
-colors = ['white', 'red', 'blue', 'green', 'yellow']
+colors = ['red', 'blue', 'green', 'black', 'yellow']
 
 def new_deck():
     deck = [];        
@@ -243,11 +245,12 @@ def print_board_state(game, seen_from=None):
 
 
 def main():
-    players = ['A', 'B']
+    players = sys.argv[1:] #['A', 'B']
     game = Game(players)
 
     while True:
-        print_board_state(game, game.players[game.active_player])
+        # print_board_state(game, game.players[game.active_player])
+        draw.draw_board_state(game, game.players[game.active_player], 'image.png')
 
         result = check_state(game)
         if result > 0:
