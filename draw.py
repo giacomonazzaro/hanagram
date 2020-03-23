@@ -49,6 +49,10 @@ def draw_board_state(game, player_viewing, filename):
       else:
         value = str(value)
       render_card(draw, x, 50, color, value)
+      xx = x
+      for discarded in sorted(game.discarded[color]):
+        draw.text((xx, y + 70), str(discarded), font=text_font, fill=(255,255,255))
+        xx += 15
       x += 70
 
     # hands
@@ -115,6 +119,7 @@ if __name__ == '__main__':
     hanabi.give_hint(game, 'Gabriele', 'blue')
     hanabi.give_hint(game, 'Gabriele', 1)
     hanabi.give_hint(game, 'Gabriele', 2)
+    game.discarded['red'] = [5, 2, 1, 1]
     # game.hands['Giacomo'][0].is_value_known = True
     # game.hands['Giacomo'][0].not_values = [1, 2, 3]
     # game.hands['Giacomo'][0].not_colors = ['red', 'blue', 'green']
