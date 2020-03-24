@@ -49,7 +49,7 @@ def send_game_views(server, chat_id):
             print(ex)
 
 def send_action_keyboard(server, user_id):
-    keyboard = ReplyKeyboardMarkup(keyboard=[['Discard', 'Play', 'Hint']])
+    keyboard = ReplyKeyboardMarkup(keyboard=[['Discard'], ['Play'], ['Hint']])
     server.bot.sendMessage(user_id, "It's your turn", reply_markup=keyboard)
 
 
