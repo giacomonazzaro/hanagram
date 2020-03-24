@@ -6,14 +6,16 @@ import sys
 import hanabi
 import draw
 
-
+class ChatGame:
+    def __init__(self):
+        self.game = None
+        self.playermap = {}
+        
 class BotServer(object):
     def __init__(self, token):
         self.token = token
         self.games = {}
         self.bot = telepot.Bot(token)
-
-
 
 server = None
 
@@ -22,7 +24,7 @@ def add_player(server, chat_id, user_id, name):
     if chat_id not in server.games:
         server.bot.sendMessage(chat_id, "No game created")
         return
-    playermap = server.games[chat_id]['playermap']
+    playermap = server.games[chat_id].playermap
     if len(playermap) >= 4:
         server.bot.sendMessage(chat_id, "Too many players")
         return
@@ -35,8 +37,8 @@ def add_player(server, chat_id, user_id, name):
 
 
 def send_game_views(server, chat_id):
-    game = server.games[chat_id]['game']
-    playermap = server.games[chat_id]['playermap']
+    game = server.games[chat_id].game
+    playermap = server.games[chat_id].playermap
 
     for name, user_id in playermap.items():
         filename = str(chat_id) +  name + 'image.png'
@@ -60,7 +62,7 @@ def handle_message(message_object):
     text = message_object['text']
 
     if text == '/create_game':
-        server.games[chat_id] = {'game': None, 'playermap': {} }
+        server.games[chat_id] = ChatGame()
         server.bot.sendMessage(chat_id, "A new game has been created")
 
     if text.startswith('/join'):
@@ -70,16 +72,16 @@ def handle_message(message_object):
 
     if text == '/start' or text == '/START':
         if text == '/START':
-            server.games[chat_id] = {'game': None, 'playermap': {} }
+            server.games[chat_id] = ChatGame()
             server.bot.sendMessage(chat_id, "A new game has been created")
             for name in ['gabriele', 'giacomo']:
                 add_player(server, chat_id, user_id, name)
 
         players = []
-        for name in server.games[chat_id]['playermap'].keys():
+        for name in server.games[chat_id].playermap.keys():
             players.append(name)
         print(players)
-        server.games[chat_id]['game'] = hanabi.Game(players)
+        server.games[chat_id].game = hanabi.Game(players)
 
         # send a view to all the players
         send_game_views(server, chat_id)
@@ -87,7 +89,7 @@ def handle_message(message_object):
 
     
     if text.startswith('/discard') or text.startswith('/play') or text.startswith('/hint'):
-        game = server.games[chat_id]['game']
+        game = server.games[chat_id].game
         player = game.players[game.active_player]
 
         hanabi.perform_action(game, player, text[1:].strip())
