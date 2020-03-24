@@ -48,6 +48,10 @@ def send_game_views(server, chat_id):
         except Exception as ex:
             print(ex)
 
+def send_action_keyboard(server, user_id):
+    keyboard = ReplyKeyboardMarkup(keyboard=[['Discard', 'Play', 'Hint']])
+    server.bot.sendMessage(user_id, "It's your turn", reply_markup=keyboard)
+
 
 def handle_message(message_object):
     print(message_object)
@@ -77,8 +81,9 @@ def handle_message(message_object):
             for name in ['gabriele', 'giacomo']:
                 add_player(server, chat_id, user_id, name)
 
+        playermap = server.games[chat_id].playermap
         players = []
-        for name in server.games[chat_id].playermap.keys():
+        for name in playermap.keys():
             players.append(name)
         print(players)
         server.games[chat_id].game = hanabi.Game(players)
@@ -86,10 +91,15 @@ def handle_message(message_object):
         # send a view to all the players
         send_game_views(server, chat_id)
         server.bot.sendMessage(chat_id, "Game sarted!")
-
+        
+        game = server.games[chat_id].game
+        active_player = game.players[game.active_player]
+        send_action_keyboard(server, playermap[active_player])
     
     if text.startswith('/discard') or text.startswith('/play') or text.startswith('/hint'):
         game = server.games[chat_id].game
+        playermap = server.games[chat_id].playermap
+        # check if it is the active player!
         player = game.players[game.active_player]
 
         hanabi.perform_action(game, player, text[1:].strip())
@@ -99,7 +109,9 @@ def handle_message(message_object):
             game.active_player = 0
         
         send_game_views(server, chat_id)
-        
+
+        active_player_name = game.players[game.active_player]
+        send_action_keyboard(server, playermap[active_player_name])        
 
     
 
