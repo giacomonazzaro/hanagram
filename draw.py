@@ -91,7 +91,7 @@ def draw_board_state(game, player_viewing, filename):
           if not card.is_value_known:
             for not_value in card.not_values:
               draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
-              xx += 10/s
+              xx += 10/size
 
         yy = y + 70/size
         xx = x + 5/size
