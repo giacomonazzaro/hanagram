@@ -32,7 +32,8 @@ def render_card_friend(image, x, y, color, value):
 def draw_board_state(game, player_viewing, filename):
     width = int(400 / size)
     height = (width * 16) // 9
-    image = Image.new('RGB', (width, height), (20, 20, 20))
+    background = (20, 20, 20)
+    image = Image.new('RGB', (width, height), background)
     draw = ImageDraw.Draw(image)
     text_fill = (200, 200, 200)
     # piles
@@ -52,7 +53,7 @@ def draw_board_state(game, player_viewing, filename):
       else:
         value = str(value)
       render_card(draw, x, y, color, value)
-      xx = x / size
+      xx = x
       for discarded in sorted(game.discarded[color]):
         draw.text((xx, y + 70/size), str(discarded), font=text_font, fill=(255,255,255))
         xx += 15/size
@@ -78,20 +79,29 @@ def draw_board_state(game, player_viewing, filename):
         render_card(draw, x, y, color, value)
 
         if player_viewing == player:
-          yy = y + 5/size
+          yy = y + 0/size
           xx = x + 5/size
 
           if not card.is_color_known:
             for not_color in card.not_colors:
-              draw.rectangle((xx, yy, xx + 10/size, yy + 5/size), fill=colors_rbg[not_color])
+              # draw.ellipse((xx, yy, xx + 10/size, yy + 5/size), fill=colors_rbg[not_color])
+              start = (xx, yy + 2/size)
+              radius =  10/size
+              draw.ellipse((start[0], start[1], start[0]+radius, start[1]+radius), fill=background)
+              start = (start[0]+2/size, start[1]+2/size)
+              radius =  6/size
+              draw.ellipse((start[0], start[1], start[0]+radius, start[1]+radius), fill=colors_rbg[not_color])
               xx += 15/size
       
           xx = x + 5/size
           yy = y + 50/size
           if not card.is_value_known:
             for not_value in card.not_values:
-              draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
-              xx += 10/size
+              start = (xx-1/size, yy)
+              radius =  12/size
+              draw.ellipse((start[0], start[1], start[0]+radius, start[1]+radius), fill=background)
+              draw.text((xx+5, yy), str(not_value), font=text_font_small, fill=text_fill)
+              xx += 15/size
 
         yy = y + 70/size
         xx = x + 5/size
@@ -102,16 +112,24 @@ def draw_board_state(game, player_viewing, filename):
 
           if not card.is_color_known:
             for not_color in card.not_colors:
-              draw.rectangle((xx, yy + 2/size, xx + 10/size, yy + 6/size), fill=colors_rbg[not_color])
-              xx += 15
+              start = (xx, yy + 2/size)
+              radius =  7/size
+              draw.ellipse((start[0], start[1], start[0]+radius, start[1]+radius), fill=background)
+              start = (start[0]+1/size, start[1]+1/size)
+              radius =  5/size
+              draw.ellipse((start[0], start[1], start[0]+radius, start[1]+radius), fill=colors_rbg[not_color])
+              xx += 25
             
           
           xx = x + 5/size
           yy += 15/size
           if not card.is_value_known:
             for not_value in card.not_values:
-              draw.text((xx, yy), str(not_value), font=text_font_small, fill=(0,0,0))
-              xx += 10/size
+              start = (xx-3.5/size, yy)
+              radius =  12/size
+              draw.ellipse((start[0], start[1], start[0]+radius, start[1]+radius), fill=background)
+              draw.text((xx, yy), str(not_value), font=text_font_small, fill=text_fill)
+              xx += 15/size
 
         x += 70/size
 
@@ -122,10 +140,12 @@ def draw_board_state(game, player_viewing, filename):
 
 if __name__ == '__main__':
     game = hanabi.Game(['Giacomo', 'Gabriele'])
-    hanabi.give_hint(game, 'Gabriele', 'red')
-    hanabi.give_hint(game, 'Gabriele', 'blue')
-    hanabi.give_hint(game, 'Gabriele', 1)
-    hanabi.give_hint(game, 'Gabriele', 2)
+    hanabi.give_hint(game, 'Giacomo', 'red')
+    hanabi.give_hint(game, 'Giacomo', 'blue')
+    hanabi.give_hint(game, 'Giacomo', 'white')
+    hanabi.give_hint(game, 'Giacomo', 1)
+    hanabi.give_hint(game, 'Giacomo', 2)
+    hanabi.give_hint(game, 'Giacomo', 3)
     game.discarded['red'] = [5, 2, 1, 1]
     # game.hands['Giacomo'][0].is_value_known = True
     # game.hands['Giacomo'][0].not_values = [1, 2, 3]
