@@ -24,7 +24,7 @@ server = None
 
 def add_player(server, chat_id, user_id, name):
     if chat_id not in server.games:
-        server.bot.sendMessage(chat_id, "No game created")
+        server.bot.sendMessage(chat_id, "No game created for this chat")
         return
     playermap = server.games[chat_id].playermap
     if len(playermap) >= 4:
@@ -43,42 +43,45 @@ def send_game_views(server, chat_id):
     playermap = server.games[chat_id].playermap
 
     for name, user_id in playermap.items():
-        filename = str(chat_id) + 'image.png'
+        # TODO: Send directly generated image, without write to disk.
+        filename = str(chat_id) + '_' + str(user_id) + '.png'
         draw.draw_board_state(game, name, filename)
         try:
-            server.bot.sendPhoto(user_id, open(filename, 'rb'))
+            with open(filename, 'rb') as image:
+                server.bot.sendPhoto(user_id, image)
         except Exception as ex:
             print(ex)
 
 
 
 
-def send_keyboard(server, chat_id, user_id, keyboard_type):
-    
+def send_keyboard(server, player, chat_id, user_id, keyboard_type):
     if keyboard_type == "action":
         keyboard = ReplyKeyboardMarkup(keyboard=[['Discard'], ['Play'], ['Hint']])
-        server.bot.sendMessage(user_id, "It's your turn", reply_markup=keyboard)
+        server.bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
     
     elif keyboard_type == "index":
         game = server.games[chat_id].game
         active_player = game.players[game.active_player]
         player_hand = server.games[chat_id].game.hands[active_player]
-        options = [[str(i)] for i in range(1, len(player_hand)+1)]
+        options = [[str(i) for i in range(1, len(player_hand)+1)]]
 
         keyboard = ReplyKeyboardMarkup(keyboard=options)
         server.bot.sendMessage(user_id, "Choose a card index", reply_markup=keyboard)
 
     elif keyboard_type == "player":
         players = server.games[chat_id].game.players
-        options = [[p] for p in players]
+        options = []
+        for p in players:
+            if p != player: options.append([p])
         keyboard = ReplyKeyboardMarkup(keyboard=options)
         server.bot.sendMessage(user_id, "Choose a player", reply_markup=keyboard)
 
     elif keyboard_type == "hint":
-        options = [[str(i)] for i in range(1, 6)]
-        options += [['red'], ['blue'], ['green'], ['white'], ['yellow']]
-        keyboard = ReplyKeyboardMarkup(keyboard=options)
-        server.bot.sendMessage(user_id, "Choose an hint", reply_markup=keyboard)
+        values = [str(i) for i in range(1, 6)]
+        colors = ['red', 'blue', 'green', 'white', 'yellow']
+        keyboard = ReplyKeyboardMarkup(keyboard=[values, colors])
+        server.bot.sendMessage(user_id, "Choose information to hint", reply_markup=keyboard)
 
 
 
@@ -90,19 +93,20 @@ def perform_action(srever, chat_id, text):
     playermap = chat_game.playermap
 
 
-    if text.startswith('Discard'):
+    text = text.lower()
+    if text.startswith('discard'):
         chat_game.active_move = "discard"
-        send_keyboard(server, chat_id, playermap[active_player], "index")
+        send_keyboard(server, active_player, chat_id, playermap[active_player], "index")
         return
 
-    if text.startswith('Play'):
+    if text.startswith('play'):
         chat_game.active_move = "play"
-        send_keyboard(server, chat_id, playermap[active_player], "index")
+        send_keyboard(server, active_player, chat_id, playermap[active_player], "index")
         return
 
-    if text.startswith('Hint'):
+    if text.startswith('hint'):
         chat_game.active_move = "hint"
-        send_keyboard(server, chat_id, playermap[active_player], "player")
+        send_keyboard(server, active_player, chat_id, playermap[active_player], "player")
         return
 
 
@@ -117,7 +121,7 @@ def perform_action(srever, chat_id, text):
         active_player = game.players[game.active_player]       
         send_game_views(server, chat_id)
         chat_game.active_move = None
-        send_keyboard(server, chat_id, playermap[active_player], "action")
+        send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
 
     # perform action play
     if chat_game.active_move == "play":
@@ -130,14 +134,14 @@ def perform_action(srever, chat_id, text):
         active_player = game.players[game.active_player]
         send_game_views(server, chat_id)
         chat_game.active_move = None
-        send_keyboard(server, chat_id, playermap[active_player], "action")
+        send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
 
     
     
     if chat_game.active_move == "hint":
         if chat_game.hint_player == None:
             chat_game.hint_player = text
-            send_keyboard(server, chat_id, playermap[active_player], "hint")
+            send_keyboard(server, active_player, chat_id, playermap[active_player], "hint")
 
         # perform hint action
         else:
@@ -150,7 +154,7 @@ def perform_action(srever, chat_id, text):
             send_game_views(server, chat_id)
             chat_game.active_move = None
             chat_game.hint_player = None
-            send_keyboard(server, chat_id, playermap[active_player], "action")
+            send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
 
 
 
@@ -201,7 +205,7 @@ def handle_message(message_object):
         game = server.games[chat_id].game
         active_player = game.players[game.active_player]
 
-        send_keyboard(server, chat_id, playermap[active_player], "action")
+        send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
     
 
     if chat_id not in server.games:

@@ -5,9 +5,11 @@
 - When is_color_known == True, the set not_colors must be cleared
 
 ## Rendering
-- Resolution indipendent rendering
-- Better font
-- Better colors
-- Better layout
+Done
 
 ## Chatbot
+- Cancel action!!!
+- Send image without writing to disk.
+- Don't ask which player to hint in a 2-player games.
+- For every action performed by a player, inform each other player of that action (privately)
+- Write information known information in keybard when playing or discarding a card (spacing issues, we need symbols to identify colors but emojis don't help much)
