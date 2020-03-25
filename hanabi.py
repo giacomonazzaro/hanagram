@@ -225,6 +225,10 @@ def perform_action(game, player, action):
 
     if not ok:
         print('Invalid action. Please repeat.')
+    else:
+        game.active_player += 1
+        if game.active_player == len(game.players):
+            game.active_player = 0
     
     return ok
 

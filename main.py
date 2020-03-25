@@ -38,17 +38,17 @@ def add_player(server, chat_id, user_id, name):
 
 
 
-def send_game_views(server, chat_id):
-    game = server.games[chat_id].game
-    playermap = server.games[chat_id].playermap
+def send_game_views(bot, chat_game):
+    # game = server.games[chat_id].game
+    # playermap = server.games[chat_id].playermap
 
-    for name, user_id in playermap.items():
+    for name, user_id in chat_game.playermap.items():
         # TODO: Send directly generated image, without write to disk.
-        filename = str(chat_id) + '_' + str(user_id) + '.png'
-        draw.draw_board_state(game, name, filename)
+        filename = str(user_id) + '.png'
+        draw.draw_board_state(chat_game.game, name, filename)
         try:
             with open(filename, 'rb') as image:
-                server.bot.sendPhoto(user_id, image)
+                bot.sendPhoto(user_id, image)
         except Exception as ex:
             print(ex)
 
@@ -93,18 +93,18 @@ def perform_action(server, chat_id, text):
     playermap = chat_game.playermap
 
 
-    text = text.lower()
-    if text.startswith('discard'):
+    # text = text.lower()
+    if text.startswith('Discard'):
         chat_game.active_move = "discard"
         send_keyboard(server, active_player, chat_id, playermap[active_player], "index")
         return
 
-    if text.startswith('play'):
+    if text.startswith('Play'):
         chat_game.active_move = "play"
         send_keyboard(server, active_player, chat_id, playermap[active_player], "index")
         return
 
-    if text.startswith('hint'):
+    if text.startswith('Hint'):
         chat_game.active_move = "hint"
         send_keyboard(server, active_player, chat_id, playermap[active_player], "player")
         return
@@ -113,26 +113,18 @@ def perform_action(server, chat_id, text):
     # perform action discard
     if chat_game.active_move == "discard":
         hanabi.perform_action(game, active_player, "discard " + text)
-        
-        game.active_player += 1
-        if game.active_player == len(game.players):
-            game.active_player = 0
 
         active_player = game.players[game.active_player]       
-        send_game_views(server, chat_id)
+        send_game_views(server.bot, chat_game)
         chat_game.active_move = None
         send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
 
     # perform action play
     if chat_game.active_move == "play":
-        hanabi.perform_action(game, active_player, "play " + text)
-        
-        game.active_player += 1 
-        if game.active_player == len(game.players): 
-            game.active_player = 0
+        hanabi.perform_action(game, active_player, "play " + text)  
         
         active_player = game.players[game.active_player]
-        send_game_views(server, chat_id)
+        send_game_views(server.bot, chat_game)
         chat_game.active_move = None
         send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
 
@@ -146,12 +138,9 @@ def perform_action(server, chat_id, text):
         # perform hint action
         else:
             hanabi.perform_action(game, active_player, "hint " + chat_game.hint_player + " " + text)
-            game.active_player += 1 
-            if game.active_player == len(game.players):
-                game.active_player = 0
-        
+                  
             active_player = game.players[game.active_player]
-            send_game_views(server, chat_id)
+            send_game_views(server.bot, chat_game)
             chat_game.active_move = None
             chat_game.hint_player = None
             send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
@@ -178,10 +167,12 @@ def handle_message(message_object):
     if text == '/create_game':
         server.games[chat_id] = ChatGame()
         server.bot.sendMessage(chat_id, "A new game has been created")
+        return
 
     if text.startswith('/join'):
         name = text[len('/join'):].strip()
         add_player(server, chat_id, user_id, name)
+        return
 
 
     if text == '/start' or text == '/START':
@@ -200,14 +191,15 @@ def handle_message(message_object):
         server.bot.sendMessage(chat_id, "Game started with players " + str(players))
 
         # send a view to all the players
-        send_game_views(server, chat_id)
+        chat_game = server.games[chat_id]
+        send_game_views(server.bot, chat_game)
         server.bot.sendMessage(chat_id, "Game sarted!")
         
         game = server.games[chat_id].game
         active_player = game.players[game.active_player]
 
         send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
-    
+        return
 
     # if chat_id not in server.games:
     #     server.bot.sendMessage(chat_id, "No game created")
