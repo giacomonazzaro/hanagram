@@ -86,7 +86,7 @@ def send_keyboard(server, player, chat_id, user_id, keyboard_type):
 
 
 
-def perform_action(srever, chat_id, text):
+def perform_action(server, chat_id, text):
     chat_game = server.games[chat_id]
     game = chat_game.game
     active_player = game.players[game.active_player]
@@ -195,8 +195,9 @@ def handle_message(message_object):
         playermap = server.games[chat_id].playermap
         for name in playermap.keys():
             players.append(name)
-        print(players)
+
         server.games[chat_id].game = hanabi.Game(players)
+        server.bot.sendMessage(chat_id, "Game started with players " + str(players))
 
         # send a view to all the players
         send_game_views(server, chat_id)
@@ -208,17 +209,21 @@ def handle_message(message_object):
         send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
     
 
-    if chat_id not in server.games:
-        server.bot.sendMessage(chat_id, "No game created")
-        return
+    # if chat_id not in server.games:
+    #     server.bot.sendMessage(chat_id, "No game created")
+    #     return
 
-    if server.games[chat_id].game == None:
-        server.bot.sendMessage(chat_id, "Join and start the game")
-        return
+    # if server.games[chat_id].game == None:
+    #     server.bot.sendMessage(chat_id, "Join and start the game")
+    #     return
 
     
     # game started
-    perform_action(server, chat_id, text)
+    for chat, game in server.games.items():
+        if not game: continue
+        for uname, uid in game.playermap.items():
+            if uid == user_id:
+                perform_action(server, chat, text)
 
     
 
