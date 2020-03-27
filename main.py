@@ -39,9 +39,6 @@ def add_player(server, chat_id, user_id, name):
 
 
 def send_game_views(bot, chat_game):
-    # game = server.games[chat_id].game
-    # playermap = server.games[chat_id].playermap
-
     for name, user_id in chat_game.playermap.items():
         # TODO: Send directly generated image, without write to disk.
         filename = str(user_id) + '.png'
@@ -53,6 +50,10 @@ def send_game_views(bot, chat_game):
             print(ex)
 
 
+def send_action_message(bot, chat_game, active_player, action):
+    for name, user_id in chat_game.playermap.items():
+        if name != active_player:
+            bot.sendMessage(user_id, active_player + "'s action\n" + action)
 
 
 def send_keyboard(server, player, chat_id, user_id, keyboard_type):
@@ -92,8 +93,6 @@ def perform_action(server, chat_id, text):
     active_player = game.players[game.active_player]
     playermap = chat_game.playermap
 
-
-    # text = text.lower()
     if text.startswith('Discard'):
         chat_game.active_move = "discard"
         send_keyboard(server, active_player, chat_id, playermap[active_player], "index")
@@ -106,29 +105,28 @@ def perform_action(server, chat_id, text):
 
     if text.startswith('Hint'):
         chat_game.active_move = "hint"
-        send_keyboard(server, active_player, chat_id, playermap[active_player], "player")
-        return
+        if len(playermap) == 2:
+            i = (game.active_player+1) % 2
+            chat_game.hint_player = game.players[i]
+            send_keyboard(server, active_player, chat_id, playermap[active_player], "hint")
+            return
+             
+        else:
+            send_keyboard(server, active_player, chat_id, playermap[active_player], "player")
+            return
 
 
-    # perform action discard
-    if chat_game.active_move == "discard":
-        hanabi.perform_action(game, active_player, "discard " + text)
-
-        active_player = game.players[game.active_player]       
+    # perform discard action
+    if chat_game.active_move == "discard" or chat_game.active_move == "play":
+        action = chat_game.active_move + " " + text
+        hanabi.perform_action(game, active_player, action)
         send_game_views(server.bot, chat_game)
-        chat_game.active_move = None
-        send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
+        send_action_message(server.bot, chat_game, active_player, action)
 
-    # perform action play
-    if chat_game.active_move == "play":
-        hanabi.perform_action(game, active_player, "play " + text)  
-        
-        active_player = game.players[game.active_player]
-        send_game_views(server.bot, chat_game)
         chat_game.active_move = None
-        send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
+        next_player = game.players[game.active_player]
+        send_keyboard(server, next_player, chat_id, playermap[next_player], "action")
 
-    
     
     if chat_game.active_move == "hint":
         if chat_game.hint_player == None:
@@ -137,13 +135,14 @@ def perform_action(server, chat_id, text):
 
         # perform hint action
         else:
-            hanabi.perform_action(game, active_player, "hint " + chat_game.hint_player + " " + text)
-                  
-            active_player = game.players[game.active_player]
+            action = "hint " + chat_game.hint_player + " " + text
+            hanabi.perform_action(game, active_player, action)
             send_game_views(server.bot, chat_game)
+            send_action_message(server.bot, chat_game, active_player, action)
             chat_game.active_move = None
             chat_game.hint_player = None
-            send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
+            next_player = game.players[game.active_player] # recompute the active player
+            send_keyboard(server, next_player, chat_id, playermap[next_player], "action")
 
 
 
@@ -200,14 +199,6 @@ def handle_message(message_object):
 
         send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
         return
-
-    # if chat_id not in server.games:
-    #     server.bot.sendMessage(chat_id, "No game created")
-    #     return
-
-    # if server.games[chat_id].game == None:
-    #     server.bot.sendMessage(chat_id, "Join and start the game")
-    #     return
 
     
     # game started
