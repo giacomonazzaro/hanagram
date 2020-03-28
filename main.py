@@ -15,9 +15,10 @@ class ChatGame:
 
 class BotServer(object):
     def __init__(self, token):
+        self.bot = telepot.Bot(token)
         self.token = token
         self.games = {}
-        self.bot = telepot.Bot(token)
+        self.user_to_chat = {}
 
 server = None
 
@@ -33,7 +34,7 @@ def add_player(server, chat_id, user_id, name):
     server.bot.sendMessage(chat_id, name + " joined")
 
     playermap[name] = user_id
-    print(server.games)
+    server.user_to_chat[user_id] = chat_id
 
 
 
