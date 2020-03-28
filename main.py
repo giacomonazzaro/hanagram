@@ -9,9 +9,8 @@ import draw
 class ChatGame:
     def __init__(self):
         self.game = None
-        self.playermap = {} 
-        self.active_move = None
-        self.hint_player = None
+        self.player_to_user = {} 
+        self.current_action = ''
 
 class BotServer(object):
     def __init__(self, token):
@@ -27,21 +26,23 @@ def add_player(server, chat_id, user_id, name):
     if chat_id not in server.games:
         server.bot.sendMessage(chat_id, "No game created for this chat")
         return
-    playermap = server.games[chat_id].playermap
-    if len(playermap) >= 4:
+    player_to_user = server.games[chat_id].player_to_user
+    if len(player_to_user) >= 4:
         server.bot.sendMessage(chat_id, "Too many players")
         return
     server.bot.sendMessage(chat_id, name + " joined")
 
-    playermap[name] = user_id
+    player_to_user[name] = user_id
     server.user_to_chat[user_id] = chat_id
 
 
 
 
-def send_game_views(bot, chat_game):
-    for name, user_id in chat_game.playermap.items():
+def send_game_views(bot, chat_game, last_player=''):
+    for name, user_id in chat_game.player_to_user.items():
         # TODO: Send directly generated image, without write to disk.
+        # TODO: Write last performed action on the game view
+        # action = chat_game.current_action
         filename = str(user_id) + '.png'
         draw.draw_board_state(chat_game.game, name, filename)
         try:
@@ -51,105 +52,111 @@ def send_game_views(bot, chat_game):
             print(ex)
 
 
-def send_action_message(bot, chat_game, active_player, action):
-    for name, user_id in chat_game.playermap.items():
+def notify_players_about_last_action(bot, chat_game, active_player):
+    for name, user_id in chat_game.player_to_user.items():
         if name != active_player:
-            bot.sendMessage(user_id, active_player + "'s action\n" + action)
+            bot.sendMessage(user_id, active_player + " performed: " + chat_game.current_action)
 
 
-def send_keyboard(server, player, chat_id, user_id, keyboard_type):
+def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
+    player = hanabi.get_active_player_name(chat_game.game)
+    user_id = chat_game.player_to_user[player]
     if keyboard_type == "action":
         keyboard = ReplyKeyboardMarkup(keyboard=[['Discard'], ['Play'], ['Hint']])
-        server.bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
+        if its_your_turn:
+            bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
     
     elif keyboard_type == "index":
-        game = server.games[chat_id].game
+        game = chat_game.game
         active_player = game.players[game.active_player]
-        player_hand = server.games[chat_id].game.hands[active_player]
+        player_hand = chat_game.game.hands[active_player]
         options = [[str(i) for i in range(1, len(player_hand)+1)]]
 
         keyboard = ReplyKeyboardMarkup(keyboard=options)
-        server.bot.sendMessage(user_id, "Choose a card index", reply_markup=keyboard)
+        bot.sendMessage(user_id, "Choose a card index", reply_markup=keyboard)
 
     elif keyboard_type == "player":
-        players = server.games[chat_id].game.players
+        players = chat_game.game.players
         options = []
         for p in players:
             if p != player: options.append([p])
         keyboard = ReplyKeyboardMarkup(keyboard=options)
-        server.bot.sendMessage(user_id, "Choose a player", reply_markup=keyboard)
+        bot.sendMessage(user_id, "Choose a player", reply_markup=keyboard)
 
     elif keyboard_type == "hint":
         values = [str(i) for i in range(1, 6)]
         colors = ['red', 'blue', 'green', 'white', 'yellow']
         keyboard = ReplyKeyboardMarkup(keyboard=[values, colors])
-        server.bot.sendMessage(user_id, "Choose information to hint", reply_markup=keyboard)
+        bot.sendMessage(user_id, "Choose information to hint", reply_markup=keyboard)
 
 
+
+def complete_processed_action(bot, chat_game, last_player):
+    send_game_views(bot, chat_game)
+    # active_player_name = chat_game.game.playeres[chat_game.game[active_player]]
+    notify_players_about_last_action(server.bot, chat_game, last_player)
+    chat_game.current_action = ''
+    next_player = hanabi.get_active_player_name(chat_game.game)
+    send_keyboard(server.bot, chat_game, "action")
 
 
 def process_action(server, chat_game, user_id, text):
     game = chat_game.game
-    active_player = game.players[game.active_player]
-    playermap = chat_game.playermap
+    active_player = hanabi.get_active_player_name(chat_game.game)
+    player_to_user = chat_game.player_to_user
 
-    if text.startswith('Discard'):
-        chat_game.active_move = "discard"
-        send_keyboard(server, active_player, user_id, playermap[active_player], "index")
-        return
+    if text.lower().startswith('discard'):
+        if chat_game.current_action != '': return False
+        chat_game.current_action = "discard"
+        send_keyboard(server.bot, chat_game, "index")
+        return True
 
-    if text.startswith('Play'):
-        chat_game.active_move = "play"
-        send_keyboard(server, active_player, user_id, playermap[active_player], "index")
-        return
+    if text.lower().startswith('play'):
+        if chat_game.current_action != '': return False
+        chat_game.current_action = "play"
+        send_keyboard(server.bot, chat_game, "index")
+        return True
 
-    if text.startswith('Hint'):
-        chat_game.active_move = "hint"
-        if len(playermap) == 2:
-            i = (game.active_player+1) % 2
-            chat_game.hint_player = game.players[i]
-            send_keyboard(server, active_player, user_id, playermap[active_player], "hint")
-            return
-             
+    if text.lower().startswith('hint'):
+        if chat_game.current_action != '': return False
+        chat_game.current_action = "hint"
+        if len(player_to_user) == 2:
+            i = 1 - game.active_player
+            chat_game.current_action += ' ' + game.players[i]
+            send_keyboard(server.bot, chat_game, "hint")
         else:
-            send_keyboard(server, active_player, user_id, playermap[active_player], "player")
-            return
+            send_keyboard(server.bot, chat_game, "player")
+        return True
 
 
     # perform discard action
-    if chat_game.active_move == "discard" or chat_game.active_move == "play":
-        action = chat_game.active_move + " " + text
-        hanabi.perform_action(game, active_player, action)
-        send_game_views(server.bot, chat_game)
-        send_action_message(server.bot, chat_game, active_player, action)
+    if chat_game.current_action == "discard" or chat_game.current_action == "play":
+        chat_game.current_action += ' ' + text
+        success = hanabi.perform_action(game, active_player, chat_game.current_action)
+        if success:
+            complete_processed_action(server.bot, chat_game, active_player)
+            return True
+        else:
+            return False
 
-        chat_game.active_move = None
-        next_player = game.players[game.active_player]
-        send_keyboard(server, next_player, user_id, playermap[next_player], "action")
+    if chat_game.current_action.startswith('hint '):
+        chat_game.current_action += ' ' + text
+        success = hanabi.perform_action(game, active_player, chat_game.current_action)
+        if success:
+            complete_processed_action(server.bot, chat_game, active_player)
+            return True
+        else:
+            return False
 
     
-    if chat_game.active_move == "hint":
-        if chat_game.hint_player == None:
-            chat_game.hint_player = text
-            send_keyboard(server, active_player, user_id, playermap[active_player], "hint")
+    if chat_game.current_action == "hint":
+        if not text in game.players:
+            return False
+        chat_game.current_action += ' ' + text
+        send_keyboard(server.bot, chat_game, "hint")
+        return True
 
-        # perform hint action
-        else:
-            action = "hint " + chat_game.hint_player + " " + text
-            hanabi.perform_action(game, active_player, action)
-            send_game_views(server.bot, chat_game)
-            send_action_message(server.bot, chat_game, active_player, action)
-            chat_game.active_move = None
-            chat_game.hint_player = None
-            next_player = game.players[game.active_player] # recompute the active player
-            send_keyboard(server, next_player, user_id, playermap[next_player], "action")
-
-
-
-
-
-
-
+        
 
 def handle_message(message_object):
     print(message_object)
@@ -182,8 +189,8 @@ def handle_message(message_object):
                 add_player(server, chat_id, user_id, name)
 
         players = []
-        playermap = server.games[chat_id].playermap
-        for name in playermap.keys():
+        player_to_user = server.games[chat_id].player_to_user
+        for name in player_to_user.keys():
             players.append(name)
 
         server.games[chat_id].game = hanabi.Game(players)
@@ -197,18 +204,19 @@ def handle_message(message_object):
         game = server.games[chat_id].game
         active_player = game.players[game.active_player]
 
-        send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
+        send_keyboard(server.bot, chat_game, "action")
         return
 
 
     if user_id == chat_id:
         chat = server.user_to_chat[user_id]
         chat_game = server.games[chat]
-        process_action(server, chat_game, user_id, text)
-
-    
-
-
+        success = process_action(server, chat_game, user_id, text)
+        if not success:
+            chat_game.current_action = ''
+            player_to_user = server.games[chat_id].player_to_user
+            server.bot.sendMessage(user_id, "Please repeat your action")
+            send_keyboard(server.bot, chat_game, "action", False)
 
 
 

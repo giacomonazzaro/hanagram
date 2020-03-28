@@ -164,6 +164,8 @@ def check_state(game):
     
     return 0
 
+def get_active_player_name(game):
+    return game.players[game.active_player]
 
 def give_color_hint(hand, color):
     for card in hand:
@@ -205,21 +207,34 @@ def concatenate(result, l, f, c):
         c(result)
     f(result, l[-1])
 
+def parse_int(s):
+    i = -1
+    try:
+        return int(s.strip()), True
+    except ValueError:
+        return 0, False
+
 def perform_action(game, player, action):
     name, value = action.strip().split(' ', 1)
     ok = False
     if name == 'discard':
-        ok = discard_card(game, player, int(value.strip()))
+        index, ok = parse_int(value)
+        if not ok: return False
+        ok = discard_card(game, player, index)
     
     elif name == 'play':
-        ok = play_card(game, player, int(value.strip()))
+        index, ok = parse_int(value)
+        if not ok: return False
+        ok = play_card(game, player, index)
     
     elif name == 'hint':
         other_player, hint = value.split(' ')
         if other_player not in game.hands.keys():
             return False
         if not hint in colors:
-            ok = give_hint(game, other_player, int(hint))
+            index, ok = parse_int(hint)
+            if not ok: return False
+            ok = give_hint(game, other_player, index)
         else:
             ok = give_hint(game, other_player, hint)
 
