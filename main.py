@@ -88,20 +88,19 @@ def send_keyboard(server, player, chat_id, user_id, keyboard_type):
 
 
 
-def perform_action(server, chat_id, text):
-    chat_game = server.games[chat_id]
+def process_action(server, chat_game, user_id, text):
     game = chat_game.game
     active_player = game.players[game.active_player]
     playermap = chat_game.playermap
 
     if text.startswith('Discard'):
         chat_game.active_move = "discard"
-        send_keyboard(server, active_player, chat_id, playermap[active_player], "index")
+        send_keyboard(server, active_player, user_id, playermap[active_player], "index")
         return
 
     if text.startswith('Play'):
         chat_game.active_move = "play"
-        send_keyboard(server, active_player, chat_id, playermap[active_player], "index")
+        send_keyboard(server, active_player, user_id, playermap[active_player], "index")
         return
 
     if text.startswith('Hint'):
@@ -109,11 +108,11 @@ def perform_action(server, chat_id, text):
         if len(playermap) == 2:
             i = (game.active_player+1) % 2
             chat_game.hint_player = game.players[i]
-            send_keyboard(server, active_player, chat_id, playermap[active_player], "hint")
+            send_keyboard(server, active_player, user_id, playermap[active_player], "hint")
             return
              
         else:
-            send_keyboard(server, active_player, chat_id, playermap[active_player], "player")
+            send_keyboard(server, active_player, user_id, playermap[active_player], "player")
             return
 
 
@@ -126,13 +125,13 @@ def perform_action(server, chat_id, text):
 
         chat_game.active_move = None
         next_player = game.players[game.active_player]
-        send_keyboard(server, next_player, chat_id, playermap[next_player], "action")
+        send_keyboard(server, next_player, user_id, playermap[next_player], "action")
 
     
     if chat_game.active_move == "hint":
         if chat_game.hint_player == None:
             chat_game.hint_player = text
-            send_keyboard(server, active_player, chat_id, playermap[active_player], "hint")
+            send_keyboard(server, active_player, user_id, playermap[active_player], "hint")
 
         # perform hint action
         else:
@@ -143,7 +142,7 @@ def perform_action(server, chat_id, text):
             chat_game.active_move = None
             chat_game.hint_player = None
             next_player = game.players[game.active_player] # recompute the active player
-            send_keyboard(server, next_player, chat_id, playermap[next_player], "action")
+            send_keyboard(server, next_player, user_id, playermap[next_player], "action")
 
 
 
@@ -201,13 +200,11 @@ def handle_message(message_object):
         send_keyboard(server, active_player, chat_id, playermap[active_player], "action")
         return
 
-    
-    # game started
-    for chat, game in server.games.items():
-        if not game: continue
-        for uname, uid in game.playermap.items():
-            if uid == user_id:
-                perform_action(server, chat, text)
+
+    if user_id == chat_id:
+        chat = server.user_to_chat[user_id]
+        chat_game = server.games[chat]
+        process_action(server, chat_game, user_id, text)
 
     
 
