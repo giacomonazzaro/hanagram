@@ -5,6 +5,8 @@ from telepot.loop import MessageLoop
 import sys
 import hanabi
 import draw
+from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
+
 
 class ChatGame:
     def __init__(self):
@@ -70,9 +72,26 @@ def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
         game = chat_game.game
         active_player = game.players[game.active_player]
         player_hand = chat_game.game.hands[active_player]
-        options = [[str(i) for i in range(1, len(player_hand)+1)]]
+        options = []
+        # options = [[str(i) for i in range(1, len(player_hand)+1)]]
+        for i, card in enumerate(player_hand):
+            info = ''
+            if card.is_color_known:
+                info += card.color + ' '
+            if card.is_value_known:
+                info += str(card.value) + ' '
+            info = info.strip()
+            if info == '':
+                info = ' '
+            # options.append([{'text':info.strip(), 'callback_data':str(i - 1)}])
+            options.append(InlineKeyboardButton(text=info, callback_data=str(i+1)))
 
-        keyboard = ReplyKeyboardMarkup(keyboard=options)
+        # keyboard = InlineKeyboardMarkup(keyboard=options)
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[options])
+
+        # keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        #            [InlineKeyboardButton(text='Press me', callback_data='press')],
+        #        ])
         bot.sendMessage(user_id, "Choose a card index", reply_markup=keyboard)
 
     elif keyboard_type == "player":
@@ -128,17 +147,6 @@ def process_action(server, chat_game, user_id, text):
             send_keyboard(server.bot, chat_game, "player")
         return True
 
-
-    # perform discard action
-    if chat_game.current_action == "discard" or chat_game.current_action == "play":
-        chat_game.current_action += ' ' + text
-        success = hanabi.perform_action(game, active_player, chat_game.current_action)
-        if success:
-            complete_processed_action(server.bot, chat_game, active_player)
-            return True
-        else:
-            return False
-
     if chat_game.current_action.startswith('hint '):
         chat_game.current_action += ' ' + text
         success = hanabi.perform_action(game, active_player, chat_game.current_action)
@@ -147,7 +155,6 @@ def process_action(server, chat_game, user_id, text):
             return True
         else:
             return False
-
     
     if chat_game.current_action == "hint":
         if not text in game.players:
@@ -156,11 +163,27 @@ def process_action(server, chat_game, user_id, text):
         send_keyboard(server.bot, chat_game, "hint")
         return True
 
-        
+
+def test(msg):
+    query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
+    user_id = int(msg['from']['id'])
+    chat = server.user_to_chat[user_id]
+    chat_game = server.games[chat]
+    game = chat_game.game
+    active_player = hanabi.get_active_player_name(game)
+
+    # perform discard action
+    if chat_game.current_action == "discard" or chat_game.current_action == "play":
+        chat_game.current_action += ' ' + data
+        success = hanabi.perform_action(game, active_player, chat_game.current_action)
+        complete_processed_action(server.bot, chat_game, active_player)
+
+    # query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
+    # print(msg)
+
 
 def handle_message(message_object):
-    print(message_object)
-    print()
+    print(message_object, '\n')
     content_type, chat_type, chat_id = telepot.glance(message_object)
     
     user_id = int(message_object['from']['id'])
@@ -169,6 +192,9 @@ def handle_message(message_object):
         return
     
     text = message_object['text']
+    data = message_object.get('callback_data', None)
+    if data:
+        print('DATA', data)
 
     if text == '/create_game':
         server.games[chat_id] = ChatGame()
@@ -181,8 +207,8 @@ def handle_message(message_object):
         return
 
 
-    if text == '/start' or text == '/START':
-        if text == '/START':
+    if text == '/start' or text == '/S':
+        if text == '/S':
             server.games[chat_id] = ChatGame()
             server.bot.sendMessage(chat_id, "A new game has been created")
             for name in ['gabriele', 'giacomo']:
@@ -227,7 +253,7 @@ def main(token):
     
     print ('*** Telegram bot started ***')
     print ('    Now listening...')
-    MessageLoop(server.bot, handle_message).run_as_thread()
+    MessageLoop(server.bot, {'chat': handle_message, 'callback_query': test}).run_as_thread()
     while 1:
         time.sleep(10)
 
