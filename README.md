@@ -1,4 +1,4 @@
-# hanabi-gram
+# Hanagram
 Telegram bot to play Hanabi with your friends.
 
 # Start a game
