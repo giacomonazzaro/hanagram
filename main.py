@@ -178,7 +178,7 @@ def test(msg):
         if len(chat_game.player_to_user) == 2:
             i = 1 - game.active_player
             chat_game.current_action += ' ' + game.players[i]
-            send_keyboard(server.bot, chat_game, "hint")
+            send_keyboard(server.bot, chat_game, "info")
         else:
             send_keyboard(server.bot, chat_game, "player")
         return True
