@@ -38,8 +38,6 @@ def add_player(server, chat_id, user_id, name):
     server.user_to_chat[user_id] = chat_id
 
 
-
-
 def send_game_views(bot, chat_game, last_player=''):
     for name, user_id in chat_game.player_to_user.items():
         # TODO: Send directly generated image, without write to disk.
@@ -52,6 +50,32 @@ def send_game_views(bot, chat_game, last_player=''):
                 bot.sendPhoto(user_id, image)
         except Exception as ex:
             print(ex)
+
+
+
+def start_game(server, chat_id):
+    if chat_id not in server.games:
+        server.bot.sendMessage(chat_id, "No game created for this chat")
+        return
+    
+    player_to_user = server.games[chat_id].player_to_user
+    if len(server.games[chat_id].player_to_user) < 2:
+        server.bot.sendMessage(chat_id, "Too few players")
+        return
+
+    players = []
+    for name in player_to_user.keys():
+        players.append(name)
+
+    server.games[chat_id].game = hanabi.Game(players)
+    server.bot.sendMessage(chat_id, "Game started with players " + str(players))
+
+    # send a view to all the players
+    chat_game = server.games[chat_id]
+    send_game_views(server.bot, chat_game)
+    server.bot.sendMessage(chat_id, "Game sarted!")
+    return
+
 
 
 def notify_players_about_last_action(bot, chat_game, active_player):
@@ -129,7 +153,7 @@ def complete_processed_action(bot, chat_game, last_player):
     send_keyboard(server.bot, chat_game, "action")
 
 
-def test(msg):
+def handle_keyboard_response(msg):
     query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
     user_id = int(msg['from']['id'])
     chat = server.user_to_chat[user_id]
@@ -208,32 +232,18 @@ def handle_message(message_object):
         add_player(server, chat_id, user_id, name)
         return
 
+    if text == '/start' or text == "/restart":
+        start_game(server, chat_id)
 
-    if text == '/start' or text == '/S':
-        if text == '/S':
-            server.games[chat_id] = ChatGame()
-            server.bot.sendMessage(chat_id, "A new game has been created")
-            for name in ['gabriele', 'giacomo', 'fabrizio']:
-                add_player(server, chat_id, user_id, name)
+    
+    
+    if text == "/S":
+        server.games[chat_id] = ChatGame()
+        server.bot.sendMessage(chat_id, "A new game has been created")
+        for name in ['gabriele', 'giacomo', 'fabrizio']:
+            add_player(server, chat_id, user_id, name)
+        start_game(server, chat_id)  
 
-        players = []
-        player_to_user = server.games[chat_id].player_to_user
-        for name in player_to_user.keys():
-            players.append(name)
-
-        server.games[chat_id].game = hanabi.Game(players)
-        server.bot.sendMessage(chat_id, "Game started with players " + str(players))
-
-        # send a view to all the players
-        chat_game = server.games[chat_id]
-        send_game_views(server.bot, chat_game)
-        server.bot.sendMessage(chat_id, "Game sarted!")
-        
-        game = server.games[chat_id].game
-        active_player = game.players[game.active_player]
-
-        send_keyboard(server.bot, chat_game, "action")
-        return
 
 
     # Cancel an action with any text
@@ -253,7 +263,7 @@ def main(token):
     
     print ('*** Telegram bot started ***')
     print ('    Now listening...')
-    MessageLoop(server.bot, {'chat': handle_message, 'callback_query': test}).run_as_thread()
+    MessageLoop(server.bot, {'chat': handle_message, 'callback_query': handle_keyboard_response}).run_as_thread()
     while 1:
         time.sleep(10)
 
