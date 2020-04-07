@@ -5,9 +5,9 @@ Telegram bot to play Hanabi with your friends.
 How to play a Telegram game:
 - Start the server with `python3 main.py <your-bot-token>`
 - Add your bot to a chat.
-- Send '\new_game' to create a new game.
-- Each player now sends '\join <my-name>'
-- Send '\start' to start playing!
+- Send `\new_game` to create a new game.
+- Each player now sends `\join <my-name>`
+- Send `\start` to start playing!
 
 # Local game
 How to play a local game. Let's say players are Alice, Bob and Casey. 
