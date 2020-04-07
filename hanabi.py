@@ -96,6 +96,7 @@ class Game(object):
         self.piles = {}
         self.final_moves = 0
         self.active_player = 0
+        self.last_action_description = 'Game just started' # TODO: better initial sentence
         
         for color in colors:
             self.discarded[color] = []
@@ -235,30 +236,30 @@ def perform_action(game, player, action):
     if name == 'discard':
         index, ok = parse_int(value)
         if not ok: return False
-        description += 'discarded '
+        description += 'discarded a '
         description += str(game.hands[player][index - 1])
         ok = discard_card(game, player, index)
 
     elif name == 'play':
         index, ok = parse_int(value)
         if not ok: return False
-        description += 'played '
+        description += 'played a '
         description += str(game.hands[player][index - 1])
         ok = play_card(game, player, index)
     
     elif name == 'hint':
         other_player, hint = value.split(' ')
         if other_player == player:
-            return False, []
+            return False
         if other_player not in game.hands.keys():
-            return False, []
+            return False
         if not hint in colors:
             index, ok = parse_int(hint)
-            if not ok: return False, []
+            if not ok: return False
             ok = give_hint(game, other_player, index)
         else:
             ok = give_hint(game, other_player, hint)
-        description += 'hinted ' + str(hint) + ' to ' + other_player
+        description += 'hinted "' + str(hint) + '" to ' + other_player
 
     if not ok:
         print('Invalid action. Please repeat.')
@@ -267,7 +268,8 @@ def perform_action(game, player, action):
         if game.active_player == len(game.players):
             game.active_player = 0
     
-    return ok, description
+    game.last_action_description = description
+    return ok
 
 def get_score(game):
     score = 0

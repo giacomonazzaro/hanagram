@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 size = 1/3
 card_font = ImageFont.truetype('Avenir.ttc', int(50/size))
 text_font = ImageFont.truetype('Avenir.ttc', int(20/size))
+text_font_discarded = ImageFont.truetype('Avenir.ttc', int(15/size))
 text_font_small = ImageFont.truetype('Avenir.ttc', int(10/size))
 
 colors_rbg = {'red': (230, 20, 20),
@@ -54,9 +55,13 @@ def draw_board_state(game, player_viewing, filename):
         value = str(value)
       render_card(draw, x, y, color, value)
       xx = x
-      for discarded in sorted(game.discarded[color]):
-        draw.text((xx, y + 70/size), str(discarded), font=text_font, fill=(255,255,255))
-        xx += 15/size
+      yy = y
+      for i, discarded in enumerate(sorted(game.discarded[color])):
+        draw.text((xx, yy + 70/size), str(discarded), font=text_font_discarded, fill=(255,255,255))
+        xx += 10/size
+        if i == 4: 
+          yy += 18 / size
+          xx = x
       x += 70/size
 
     # hands
@@ -135,19 +140,24 @@ def draw_board_state(game, player_viewing, filename):
 
       if player_viewing == player: y -= 30/size
 
+    # draw.text((20 / size, 300), game.last_action_description, font=text_font_small, fill=text_fill)
+    x = left_margin
+    y = 6 * 110 / size
+    draw.text((x, y), game.last_action_description, font=text_font, fill=text_fill)
     
     image.save(filename)
 
 if __name__ == '__main__':
-    game = hanabi.Game(['Giacomo', 'Gabriele'])
-    hanabi.give_hint(game, 'Giacomo', 'red')
-    hanabi.give_hint(game, 'Giacomo', 'blue')
+    game = hanabi.Game(['Giacomo', 'Gabriele', 'Fabrizio'])
+    hanabi.perform_action(game, 'Giacomo', 'hint Gabriele yellow')
+    # hanabi.give_hint(game, 'Giacomo', 'red')
+    # hanabi.give_hint(game, 'Giacomo', 'blue')
     # hanabi.give_hint(game, 'Giacomo', 'white')
     # hanabi.give_hint(game, 'Giacomo', 'yellow')
     # hanabi.give_hint(game, 'Giacomo', 1)
     # hanabi.give_hint(game, 'Giacomo', 2)
     # hanabi.give_hint(game, 'Giacomo', 3)
-    # game.discarded['red'] = [5, 2, 1, 1]
+    game.discarded['red'] = [5, 2, 1, 1, 3, 3, 2]
     # game.hands['Giacomo'][0].is_value_known = True
     # game.hands['Giacomo'][0].not_values = [1, 2, 3]
     # game.hands['Giacomo'][0].not_colors = ['red', 'blue', 'green']

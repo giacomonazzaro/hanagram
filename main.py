@@ -140,7 +140,7 @@ def restart_turn(bot, chat_game):
     send_keyboard(server.bot, chat_game, "action")
 
 
-def complete_processed_action(bot, chat_game, last_player, description):
+def complete_processed_action(bot, chat_game, last_player):
     send_game_views(bot, chat_game)
     # TODO: write action description in the image
     for name, user_id in chat_game.player_to_user.items():
@@ -162,19 +162,11 @@ def handle_keyboard_response(msg):
     # perform discard action
     if chat_game.current_action in ["discard", "play"] or chat_game.current_action.strip().startswith('hint '):
         chat_game.current_action += ' ' + data
-        success, description = hanabi.perform_action(game, active_player, chat_game.current_action)
+        success = hanabi.perform_action(game, active_player, chat_game.current_action)
         if success:
-            complete_processed_action(server.bot, chat_game, active_player, description)
+            complete_processed_action(server.bot, chat_game, active_player)
         else:
             restart_turn(server.bot, chat_game)
-
-
-        # chat_game.current_action += ' ' + data
-        # success, description = hanabi.perform_action(game, active_player, chat_game.current_action)
-        # if success:
-        #     complete_processed_action(server.bot, chat_game, active_player)
-        # else:
-        #     restart_turn(server.bot, chat_game)
 
     if chat_game.current_action == 'hint':
         chat_game.current_action += ' ' + data
