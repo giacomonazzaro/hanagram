@@ -142,11 +142,12 @@ if __name__ == '__main__':
     game = hanabi.Game(['Giacomo', 'Gabriele'])
     hanabi.give_hint(game, 'Giacomo', 'red')
     hanabi.give_hint(game, 'Giacomo', 'blue')
-    hanabi.give_hint(game, 'Giacomo', 'white')
-    hanabi.give_hint(game, 'Giacomo', 1)
-    hanabi.give_hint(game, 'Giacomo', 2)
-    hanabi.give_hint(game, 'Giacomo', 3)
-    game.discarded['red'] = [5, 2, 1, 1]
+    # hanabi.give_hint(game, 'Giacomo', 'white')
+    # hanabi.give_hint(game, 'Giacomo', 'yellow')
+    # hanabi.give_hint(game, 'Giacomo', 1)
+    # hanabi.give_hint(game, 'Giacomo', 2)
+    # hanabi.give_hint(game, 'Giacomo', 3)
+    # game.discarded['red'] = [5, 2, 1, 1]
     # game.hands['Giacomo'][0].is_value_known = True
     # game.hands['Giacomo'][0].not_values = [1, 2, 3]
     # game.hands['Giacomo'][0].not_colors = ['red', 'blue', 'green']

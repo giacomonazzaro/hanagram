@@ -28,6 +28,10 @@ class HandCard(object):
         self.not_colors = []
         self.not_values = []
 
+    def __str__(self):
+        return self.color + ' ' + str(self.value)
+
+
 def to_string(card, show_value, show_info):
     info = []
     result = ''
@@ -175,6 +179,11 @@ def give_color_hint(hand, color):
         else:
             if color not in card.not_colors:
                 card.not_colors.append(color)
+        
+        if len(card.not_colors) == 4:
+            card.not_colors = []
+            card.is_color_known = True
+
 
 def give_value_hint(hand, value):
     for card in hand:
@@ -184,6 +193,10 @@ def give_value_hint(hand, value):
         else:
             if value not in card.not_values:
                 card.not_values.append(value)
+
+        if len(card.not_values) == 4:
+            card.not_values = []
+            card.is_value_known = True
 
 
 def give_hint(game, player, hint):
@@ -217,26 +230,35 @@ def parse_int(s):
 def perform_action(game, player, action):
     name, value = action.strip().split(' ', 1)
     ok = False
+    description = player[:] + ' '
+
     if name == 'discard':
         index, ok = parse_int(value)
         if not ok: return False
+        description += 'discarded '
+        description += str(game.hands[player][index - 1])
         ok = discard_card(game, player, index)
-    
+
     elif name == 'play':
         index, ok = parse_int(value)
         if not ok: return False
+        description += 'played '
+        description += str(game.hands[player][index - 1])
         ok = play_card(game, player, index)
     
     elif name == 'hint':
         other_player, hint = value.split(' ')
+        if other_player == player:
+            return False, []
         if other_player not in game.hands.keys():
-            return False
+            return False, []
         if not hint in colors:
             index, ok = parse_int(hint)
-            if not ok: return False
+            if not ok: return False, []
             ok = give_hint(game, other_player, index)
         else:
             ok = give_hint(game, other_player, hint)
+        description += 'hinted ' + str(hint) + ' to ' + other_player
 
     if not ok:
         print('Invalid action. Please repeat.')
@@ -245,7 +267,7 @@ def perform_action(game, player, action):
         if game.active_player == len(game.players):
             game.active_player = 0
     
-    return ok
+    return ok, description
 
 def get_score(game):
     score = 0
@@ -268,9 +290,9 @@ def print_board_state(game, seen_from=None):
     print('score: ' + str(score) + ', deck: ' + str(len(game.deck)))
     print()
 
-
 def main():
-    players = sys.argv[1:] #['A', 'B']
+    players = sys.argv[1:]
+    print(players)
     game = Game(players)
 
     while True:
@@ -287,10 +309,9 @@ def main():
         ok = False
         while not ok:
             action = input(players[game.active_player] + ': ')
-            ok = perform_action(game, players[game.active_player], action)
+            ok, description = perform_action(game, players[game.active_player], action)
             if ok:
-                game.active_player += 1
-                if game.active_player == len(players): game.active_player = 0
+                print(description)
                 print()
                 print('    *****************')
                 print()
