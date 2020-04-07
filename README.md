@@ -1,21 +1,18 @@
 # Hanagram
 Telegram bot to play Hanabi with your friends.
 
-# Start a game
-Run  
-`python3 hanabi.py <names of players>`
+# Telegram game
+How to play a Telegram game:
+- Start the server with `python3 main.py <your-bot-token>`
+- Add your bot to a chat.
+- Send '\new_game' to create a new game.
+- Each player now sends '\join <my-name>'
+- Send '\start' to start playing!
 
-For example  
-`python3 hanabi.py Alice Bob Casey`
-
-# How to play
-Actions:
-- `play <index of card to play>`
-- `discard <index of card to play>`
-- `hint <player name to hint> <color or value>`
-
-Examples
-- `play 3`  
-- `discard 1`  
-- `hint Alice yellow`  
-- `hint Bob 5`  
+# Local game
+How to play a local game. Let's say players are Alice, Bob and Casey. 
+- Run `python3 hanabi.py Alice Bob Casey`
+- On each turn, type one of those actions:
+    - `play <index of card to play>`
+    - `discard <index of card to play>`
+    - `hint <player name to hint> <color or value>`
