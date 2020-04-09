@@ -167,15 +167,23 @@ def handle_keyboard_response(msg):
     if not chat_game: return
 
     game = chat_game.game
+    if not game or hanabi.check_state(game) != 0: return
+
     active_player = hanabi.get_active_player_name(game)
     active_user_id = chat_game.player_to_user[active_player]
     if user_id != active_user_id: return
 
-
-    # perform discard action
+    # perform action
     if chat_game.current_action in ["discard", "play"] or chat_game.current_action.strip().startswith('hint '):
         chat_game.current_action += ' ' + data
         success = hanabi.perform_action(game, active_player, chat_game.current_action)
+
+        # check game termination
+        if hanabi.check_state(game) != 0:
+            send_game_views(server.bot, chat_game)
+            server.bot.sendMessage(chat, "The game is over. Please use /restart to play again")
+            return
+
         if success:
             complete_processed_action(server.bot, chat_game, active_player)
         else:
@@ -256,6 +264,10 @@ def handle_message(message_object):
     if not chat: return
 
     chat_game = server.games[chat]
+    game = chat_game.game
+
+    if not game or hanabi.check_state(game) != 0: return
+
     active_player = hanabi.get_active_player_name(chat_game.game)
     active_user_id = chat_game.player_to_user[active_player]
     if user_id == active_user_id:
