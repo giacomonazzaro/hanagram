@@ -149,10 +149,19 @@ def complete_processed_action(bot, chat_game, last_player):
 def handle_keyboard_response(msg):
     query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
     user_id = int(msg['from']['id'])
-    chat = server.user_to_chat[user_id]
-    chat_game = server.games[chat]
+
+    # TODO: refactor this block into a function
+    chat = server.user_to_chat.get(user_id, None)
+    if not chat: return
+
+    chat_game = server.games.get(chat, None)
+    if not chat_game: return
+
     game = chat_game.game
     active_player = hanabi.get_active_player_name(game)
+    active_user_id = chat_game.player_to_user[active_player]
+    if user_id != active_user_id: return
+
 
     # perform discard action
     if chat_game.current_action in ["discard", "play"] or chat_game.current_action.strip().startswith('hint '):
