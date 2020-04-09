@@ -167,6 +167,7 @@ def handle_game_ending(bot, chat_game):
     
     bot.sendMessage(chat_id, "The game ended with score " + str(score))
     bot.sendMessage(chat_id, "Send /restart to play again")
+    chat_game.game = None
     return
 
 
@@ -194,7 +195,7 @@ def handle_keyboard_response(msg):
     if not chat_game: return
 
     game = chat_game.game
-    if not game or hanabi.check_state(game) != 0: return
+    if not game: return
 
     active_player = hanabi.get_active_player_name(game)
     active_user_id = chat_game.player_to_user[active_player]
@@ -287,7 +288,7 @@ def handle_message(message_object):
     chat_game = server.games[chat]
     game = chat_game.game
 
-    if not game or hanabi.check_state(game) != 0: return
+    if not game: return
 
     active_player = hanabi.get_active_player_name(chat_game.game)
     active_user_id = chat_game.player_to_user[active_player]
