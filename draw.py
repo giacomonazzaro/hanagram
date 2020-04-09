@@ -33,6 +33,9 @@ def render_card_friend(image, x, y, color, value):
 def draw_board_state(game, player_viewing, filename):
     width = int(400 / size)
     height = (width * 16) // 9
+    if len(game.players) == 4:
+      height += 100
+
     background = (20, 20, 20)
     image = Image.new('RGB', (width, height), background)
     draw = ImageDraw.Draw(image)
@@ -140,9 +143,11 @@ def draw_board_state(game, player_viewing, filename):
 
       if player_viewing == player: y -= 30/size
 
-    # draw.text((20 / size, 300), game.last_action_description, font=text_font_small, fill=text_fill)
+
     x = left_margin
-    y = 6 * 110 / size
+    y = height
+    if len(game.players) < 4: y -= 50/size
+    else: y -= 40/size
     draw.text((x, y), game.last_action_description, font=text_font, fill=text_fill)
     
     image.save(filename)
