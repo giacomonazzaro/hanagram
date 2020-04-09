@@ -41,8 +41,6 @@ def add_player(server, chat_id, user_id, name):
 def send_game_views(bot, chat_game, last_player=''):
     for name, user_id in chat_game.player_to_user.items():
         # TODO: Send directly generated image, without write to disk.
-        # TODO: Write last performed action on the game view
-        # action = chat_game.current_action
         filename = str(user_id) + '.png'
         draw.draw_board_state(chat_game.game, name, filename)
         try:
@@ -87,8 +85,10 @@ def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
         keyboard = [[
             InlineKeyboardButton(text='Discard', callback_data='discard'),
             InlineKeyboardButton(text='Play', callback_data='play'),
-            InlineKeyboardButton(text='Hint', callback_data='hint')
         ]]
+        if chat_game.game.hints > 0:
+            keyboard[0].append(InlineKeyboardButton(text='Hint', callback_data='hint'))
+        
         keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
         if its_your_turn:
             bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
@@ -98,7 +98,6 @@ def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
         active_player = game.players[game.active_player]
         player_hand = chat_game.game.hands[active_player]
         options = []
-        # options = [[str(i) for i in range(1, len(player_hand)+1)]]
         for i, card in enumerate(player_hand):
             info = ''
             if card.is_color_known:
@@ -142,10 +141,6 @@ def restart_turn(bot, chat_game):
 
 def complete_processed_action(bot, chat_game, last_player):
     send_game_views(bot, chat_game)
-    # TODO: write action description in the image
-    for name, user_id in chat_game.player_to_user.items():
-        bot.sendMessage(user_id, description)
-
     chat_game.current_action = ''
     next_player = hanabi.get_active_player_name(chat_game.game)
     send_keyboard(server.bot, chat_game, "action")
@@ -226,7 +221,7 @@ def handle_message(message_object):
         add_player(server, chat_id, user_id, name)
         return
 
-    if text == '/start':
+    if text in ['/start', '/restart']:
         start_game(server, chat_id, user_id)    
     
     if text == "/S":
@@ -239,12 +234,17 @@ def handle_message(message_object):
 
 
     # Cancel an action with any text
-    chat = server.user_to_chat[user_id]
+    chat = server.user_to_chat.get(user_id, None)
+    if not chat: return
+
     chat_game = server.games[chat]
     active_player = hanabi.get_active_player_name(chat_game.game)
     active_user_id = chat_game.player_to_user[active_player]
     if user_id == active_user_id:
         restart_turn(server.bot, chat_game)
+    else:
+        server.bot.sendMessage(chat_id, "Wait for your turn")
+
 
 
 
