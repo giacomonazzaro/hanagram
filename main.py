@@ -8,11 +8,12 @@ from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 
 
 class ChatGame:
-    def __init__(self, admin):
+    def __init__(self, chat_id, admin):
         self.game = None
         self.admin = admin
         self.player_to_user = {} 
         self.current_action = ''
+        self.chat_id = chat_id
 
 class BotServer(object):
     def __init__(self, token):
@@ -148,7 +149,33 @@ def restart_turn(bot, chat_game):
     send_keyboard(server.bot, chat_game, "action")
 
 
+def handle_game_ending(bot, chat_game):
+    send_game_views(bot, chat_game)
+    chat_id = chat_game.chat_id
+    game = chat_game.game
+    filename = str(chat_id) + '.png'
+    draw.draw_board_state(chat_game.game, '', filename)
+    try:
+        with open(filename, 'rb') as image:
+            bot.sendPhoto(chat_id, image)
+    except Exception as ex:
+        print(ex)
+
+    score = hanabi.get_score(game)
+    for name, user_id in chat_game.player_to_user.items():
+        bot.sendMessage(user_id, "The game ended with score " + str(score))
+    
+    bot.sendMessage(chat_id, "The game ended with score " + str(score))
+    bot.sendMessage(chat_id, "Send /restart to play again")
+    return
+
+
 def complete_processed_action(bot, chat_game, last_player):
+    # check game ending
+    if hanabi.check_state(chat_game.game) != 0:
+        handle_game_ending(bot, chat_game)
+        return
+
     send_game_views(bot, chat_game)
     chat_game.current_action = ''
     next_player = hanabi.get_active_player_name(chat_game.game)
@@ -177,12 +204,6 @@ def handle_keyboard_response(msg):
     if chat_game.current_action in ["discard", "play"] or chat_game.current_action.strip().startswith('hint '):
         chat_game.current_action += ' ' + data
         success = hanabi.perform_action(game, active_player, chat_game.current_action)
-
-        # check game termination
-        if hanabi.check_state(game) != 0:
-            send_game_views(server.bot, chat_game)
-            server.bot.sendMessage(chat, "The game is over. Please use /restart to play again")
-            return
 
         if success:
             complete_processed_action(server.bot, chat_game, active_player)
@@ -233,13 +254,13 @@ def handle_message(message_object):
         print('DATA', data)
 
     if text == '/new_game':
-        server.games[chat_id] = ChatGame(admin=user_id)
+        server.games[chat_id] = ChatGame(chat_id, admin=user_id)
         server.bot.sendMessage(chat_id, "A new game has been created")
         return
 
     if text == '/end_game':
         del server.games[chat_id]
-        server.bot.sendMessage(chat_id, "Game ended")
+        server.bot.sendMessage(chat_id, "The game ended.")
         return
 
     if text.startswith('/join'):
@@ -251,8 +272,8 @@ def handle_message(message_object):
         start_game(server, chat_id, user_id)    
     
     if text == "/S":
-        server.games[chat_id] = ChatGame(admin=user_id)
-        server.bot.sendMessage(chat_id, "A new game has been created")
+        server.games[chat_id] = ChatGame(chat_id, admin=user_id)
+        server.bot.sendMessage(chat_id, "A new game has been created.")
         for name in ['gabriele', 'giacomo', 'fabrizio']:
             add_player(server, chat_id, user_id, name)
         start_game(server, chat_id, user_id)  
@@ -273,7 +294,7 @@ def handle_message(message_object):
     if user_id == active_user_id:
         restart_turn(server.bot, chat_game)
     else:
-        server.bot.sendMessage(chat_id, "Wait for your turn")
+        server.bot.sendMessage(chat_id, "Wait for your turn.")
 
 
 
