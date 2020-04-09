@@ -32,8 +32,17 @@ def add_player(server, chat_id, user_id, name):
     if len(player_to_user) >= 4:
         server.bot.sendMessage(chat_id, "Too many players")
         return
-    server.bot.sendMessage(chat_id, name + " joined")
 
+    if len(name) == 0:
+        server.bot.sendMessage(chat_id, "You must write your name after '/join'. Please repeat.")
+        return
+
+    name = name if len(name) <= 20 else name[:20]
+    if name in player_to_user:
+        server.bot.sendMessage(chat_id, name + " is already used by another player in this game. Please repeat.")
+        return
+
+    server.bot.sendMessage(chat_id, name + " joined")
     player_to_user[name] = user_id
     server.user_to_chat[user_id] = chat_id
 
