@@ -107,6 +107,103 @@ class Game(object):
             self.hands[player] = new_hand(self.deck, num_cards)
 
 
+def check_color_finished(game, color):
+    hinted = 0
+    for hand in game.hands.values():
+        for card in hand:
+            if card.is_color_known and card.color == color:
+                hinted += 1
+    pile_value = game.piles[color]
+    discarded = len(game.discarded[color])
+    return (hinted + pile_value + discarded) == 10
+
+
+def check_value_finished(game, value):
+    count = 0
+    for hand in game.hands.values():
+        for card in hand:
+            if card.is_value_known and card.value == value:
+                count += 1
+    piles = game.piles
+    discarded = game.discarded
+    for color in colors:
+        if piles[color] >= value:
+            count += 1
+        count += discarded[color].count(value)
+    if value == 1:
+        return count == 15
+
+    elif value in [2,3,4]:
+        return count == 10
+    
+    elif value == 5:
+        return count == 5
+
+def count_discarded(game, color, value):
+    count = 0
+    for dicarded_value in game.discarded[color]:
+        if dicarded_value == value:
+            count += 1
+    return count
+
+def check_card_finished(game, color, value):
+    discarded = count_discarded(game, color, value)
+    played = 1 if game.piles[color] >= value else 0
+    count = discarded + played
+    for hand in game.hands.values():
+        for card in hand:
+            if card.is_color_known and card.is_value_known:
+                if card.value == value and card.color == color:
+                    count += 1
+    if value == 1 and count < 3: return False
+    if value in [2,3,4] and count < 2: return False
+    if value == 5 and count < 1: return False
+    return True
+
+
+def update_not_colors(card, color):
+    if card.color != color:
+        if not card.is_color_known and color not in card.not_colors:
+            card.not_colors.append(color)
+            if len(card.not_colors) == 4:
+                card.not_colors = []
+                card.is_color_known = True
+
+def update_not_values(card, value):
+    if card.value != value:
+        if not card.is_value_known and value not in card.not_values:
+            card.not_values.append(value)
+            if len(card.not_values) == 4:
+                card.not_values = []
+                card.is_value_known = True
+
+
+def update_hand_info(game):
+    for color in colors:
+        if check_color_finished(game, color):
+            for hand in game.hands.values():
+                for card in hand:
+                    update_not_colors(card, color)
+
+    for value in [1,2,3,4,5]:
+        if check_value_finished(game, value):
+            for hand in game.hands.values():
+                for card in hand:
+                    update_not_values(card, value)
+
+    for hand in game.hands.values():
+        for card in hand:    
+            if card.is_value_known and not card.is_color_known:
+                for color in colors:
+                    if check_card_finished(game, color, card.value):
+                        update_not_colors(card, color)
+
+            elif card.is_color_known and not card.is_value_known:
+                for value in range(1, 6):
+                    if check_card_finished(game, card.color, value):
+                        update_not_values(card, value)
+
+
 def discard_card(game, player, index):
     if index < 1 or index > len(game.hands[player]):
         return False
@@ -269,6 +366,8 @@ def perform_action(game, player, action):
             game.active_player = 0
     
     game.last_action_description = description
+    if ok:
+        update_hand_info(game)
     return ok
 
 def get_score(game):
