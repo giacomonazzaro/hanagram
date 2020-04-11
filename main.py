@@ -38,13 +38,6 @@ def add_player(server, chat_id, user_id, name):
     if len(player_to_user) >= 4:
         server.bot.sendMessage(chat_id, "Too many players")
         return
-
-    if len(name) == 0:
-        server.bot.sendMessage(chat_id, "You must write your name after '/join'. Please repeat.")
-        return
-
-    # if name in player_to_user:
-    #     name += ' ' + surname
     
     if name in player_to_user:
         name += '_' + str(len(player_to_user))
@@ -278,11 +271,6 @@ def handle_message(message_object):
     if text == '/end_game':
         del server.games[chat_id]
         server.bot.sendMessage(chat_id, "The game ended.")
-        return
-
-    if text.startswith('/join'):
-        name = text[len('/join'):].strip()
-        add_player(server, chat_id, user_id, name)
         return
 
     if text in ['/start', '/restart']:
