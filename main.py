@@ -29,6 +29,11 @@ def add_player(server, chat_id, user_id, name):
     if chat_id not in server.games:
         server.bot.sendMessage(chat_id, "No game created for this chat")
         return
+
+    if user_id in server.user_to_chat.keys():
+        # server.bot.sendMessage(chat_id, "You already joined the game")
+        return
+
     player_to_user = server.games[chat_id].player_to_user
     if len(player_to_user) >= 4:
         server.bot.sendMessage(chat_id, "Too many players")
@@ -38,11 +43,12 @@ def add_player(server, chat_id, user_id, name):
         server.bot.sendMessage(chat_id, "You must write your name after '/join'. Please repeat.")
         return
 
-    name = name if len(name) <= 20 else name[:20]
+    # if name in player_to_user:
+    #     name += ' ' + surname
+    
     if name in player_to_user:
-        server.bot.sendMessage(chat_id, name + " is already used by another player in this game. Please repeat.")
-        return
-
+        name += '_' + str(len(player_to_user))
+        
     server.bot.sendMessage(chat_id, name + " joined")
     player_to_user[name] = user_id
     server.user_to_chat[user_id] = chat_id
@@ -185,7 +191,13 @@ def complete_processed_action(bot, chat_game, last_player):
 
 def handle_keyboard_response(msg):
     query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
+    print(msg)
     user_id = int(msg['from']['id'])
+    chat_id = int(msg['message']['chat']['id'])
+
+    if data == 'join':
+        add_player(server, chat_id, user_id, msg['from']['first_name'])
+        return
 
     # TODO: refactor this block into a function
     chat = server.user_to_chat.get(user_id, None)
@@ -249,14 +261,18 @@ def handle_message(message_object):
     if content_type != 'text':
         return
     
-    text = message_object['text']
+    text = message_object['text'].split('@')[0].strip()
     data = message_object.get('callback_data', None)
     if data:
         print('DATA', data)
 
     if text == '/new_game':
         server.games[chat_id] = ChatGame(chat_id, admin=user_id)
-        server.bot.sendMessage(chat_id, "A new game has been created")
+        keyboard = [[
+            InlineKeyboardButton(text='Join', callback_data='join'),
+        ]]
+        keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
+        server.bot.sendMessage(chat_id, "A new game has been created", reply_markup=keyboard)
         return
 
     if text == '/end_game':
