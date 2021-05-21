@@ -1,6 +1,53 @@
 import hanabi
 from PIL import Image, ImageDraw, ImageFont
 
+def rounded_rectangle(image: ImageDraw, xy, corner_radius, fill=None, outline=None):
+    upper_left_point = xy[0]
+    bottom_right_point = xy[1]
+    image.rectangle(
+        [
+            (upper_left_point[0], upper_left_point[1] + corner_radius),
+            (bottom_right_point[0], bottom_right_point[1] - corner_radius)
+        ],
+        fill=fill,
+        outline=outline
+    )
+    image.rectangle(
+        [
+            (upper_left_point[0] + corner_radius, upper_left_point[1]),
+            (bottom_right_point[0] - corner_radius, bottom_right_point[1])
+        ],
+        fill=fill,
+        outline=outline
+    )
+    image.pieslice([upper_left_point, (upper_left_point[0] + corner_radius * 2, upper_left_point[1] + corner_radius * 2)],
+        180,
+        270,
+        fill=fill,
+        outline=outline
+    )
+    image.pieslice([(bottom_right_point[0] - corner_radius * 2, bottom_right_point[1] - corner_radius * 2), bottom_right_point],
+        0,
+        90,
+        fill=fill,
+        outline=outline
+    )
+    image.pieslice([(upper_left_point[0], bottom_right_point[1] - corner_radius * 2), (upper_left_point[0] + corner_radius * 2, bottom_right_point[1])],
+        90,
+        180,
+        fill=fill,
+        outline=outline
+    )
+    image.pieslice([(bottom_right_point[0] - corner_radius * 2, upper_left_point[1]), (bottom_right_point[0], upper_left_point[1] + corner_radius * 2)],
+        270,
+        360,
+        fill=fill,
+        outline=outline
+    )
+
+
+# ImageDraw.rounded_rectangle = rounded_rectangle
+
 size = 1/3
 card_font = ImageFont.truetype('Avenir.ttc', int(50/size))
 text_font = ImageFont.truetype('Avenir.ttc', int(20/size))
@@ -17,7 +64,7 @@ colors_rbg = {'red': (230, 20, 20),
 
 def render_card(image, x, y, color, value):
     width = 50/size
-    image.rectangle((x, y, x + width, y + width * 1.3), fill=colors_rbg[color])
+    rounded_rectangle(image, ((x, y), (x + width, y + width * 1.3)), width/7, fill=colors_rbg[color])
     text_fill = (0, 0, 0)
     # if color == 'black': text_fill = (255, 255, 255)
     image.text((x + width/4, y), value, font=card_font, fill=text_fill)
@@ -25,7 +72,7 @@ def render_card(image, x, y, color, value):
 def render_card_friend(image, x, y, color, value):
     width = 50/size
     height = 30/size
-    image.rectangle((x, y, x + width, y + height), fill=colors_rbg[color])
+    rounded_rectangle(image, ((x, y), (x + width, y + height)), width/10, fill=colors_rbg[color])
     text_fill = (0, 0, 0)
     # if color == 'black': text_fill = (255, 255, 255)
     image.text((x + width/2.5, y + height/8), value, font=text_font, fill=text_fill)

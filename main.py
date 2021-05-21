@@ -70,6 +70,7 @@ def start_game(server, chat_id, user_id):
 
     player_to_user = server.games[chat_id].player_to_user
     if len(server.games[chat_id].player_to_user) < 2:
+        print('server.games[chat_id].player_to_user:', server.games[chat_id].player_to_user)
         server.bot.sendMessage(chat_id, "Too few players")
         return
 
