@@ -6,7 +6,7 @@ How to play a Telegram game:
 - Start the server with `python3 main.py <your-bot-token>`
 - Add your bot to a chat.
 - Send `\new_game` to create a new game.
-- Each player now sends `\join <my-name>`
+- Users can join the game with the `Join` button displayed (they must acitvate the bot).
 - Send `\start` to start playing!
 
 # Local game
