@@ -1,5 +1,8 @@
+
 # Hanagram
 Telegram bot to play Hanabi with your friends.
+
+![](example.jpg)
 
 # Telegram game
 How to play a Telegram game:
