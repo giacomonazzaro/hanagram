@@ -4,6 +4,18 @@ Telegram bot to play Hanabi with your friends.
 
 <img src="example.jpg" with="51">
 
+# Install
+Install hanagram and its dependencies:
+```bash
+git clone https://github.com/francesconazzaro/telepota.git
+git clone https://github.com/giacomonazzaro/hanagram.git
+cd telepota
+pip install .
+cd ../hanagram
+pip install -R requirements.txt
+pip install .
+```
+
 # Telegram game
 How to play a Telegram game:
 - Start the server with `python3 main.py <your-bot-token>`
