@@ -20,23 +20,25 @@ class BotServer(object):
         self.bot = telepot.Bot(token)
         self.token = token
         self.games = {}
-        self.user_to_chat = {}
 
 server = None
 
 
-def add_player(server, chat_id, user_id, name):
+def add_player(server, chat_id, user_id, name, allow_repeated_players=False):
     if chat_id not in server.games:
         server.bot.sendMessage(chat_id, "No game created for this chat")
         return
 
-    if user_id in server.user_to_chat.keys():
-        # server.bot.sendMessage(chat_id, "You already joined the game")
+    if allow_repeated_players and user_id in player_to_user.values():
         return
+
+    # if user_id in server.user_to_chat_id.keys():
+        # server.bot.sendMessage(chat_id, "You already joined the game")
+        # return
 
     player_to_user = server.games[chat_id].player_to_user
     if len(player_to_user) >= 4:
-        server.bot.sendMessage(chat_id, "Too many players")
+        server.bot.sendMessage(chat_id, "There are already 4 players in the game.")
         return
     
     if name in player_to_user:
@@ -44,7 +46,7 @@ def add_player(server, chat_id, user_id, name):
         
     server.bot.sendMessage(chat_id, name + " joined")
     player_to_user[name] = user_id
-    server.user_to_chat[user_id] = chat_id
+    # server.user_to_chat_id[user_id] = chat_id
 
 
 def send_game_views(bot, chat_game, last_player=''):
@@ -57,6 +59,7 @@ def send_game_views(bot, chat_game, last_player=''):
                 bot.sendPhoto(user_id, image)
         except Exception as ex:
             print(ex)
+            pass
 
 
 
@@ -84,24 +87,24 @@ def start_game(server, chat_id, user_id):
     # send a view to all the players
     chat_game = server.games[chat_id]
     send_game_views(server.bot, chat_game)
-    server.bot.sendMessage(chat_id, "Game sarted!")
+    server.bot.sendMessage(chat_id, "Game started!")
     return
 
 
-def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
+def send_keyboard(bot, chat_id, keyboard_type):
+    chat_game = bot.games[chat_id]
     player = hanabi.get_active_player_name(chat_game.game)
     user_id = chat_game.player_to_user[player]
     if keyboard_type == "action":
         keyboard = [[
-            InlineKeyboardButton(text='Discard', callback_data='discard'),
-            InlineKeyboardButton(text='Play', callback_data='play'),
+            InlineKeyboardButton(text='Discard', callback_data='discard|' + str(chat_id)),
+            InlineKeyboardButton(text='Play', callback_data='play|' + str(chat_id)),
         ]]
         if chat_game.game.hints > 0:
-            keyboard[0].append(InlineKeyboardButton(text='Hint', callback_data='hint'))
+            keyboard[0].append(InlineKeyboardButton(text='Hint', callback_data='hint|' + str(chat_id)))
         
         keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
-        if its_your_turn:
-            bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
+        bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
     
     elif keyboard_type in ['play', 'discard']:
         game = chat_game.game
@@ -117,7 +120,7 @@ def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
             info = info.strip()
             if info == '':
                 info = ' '
-            options.append(InlineKeyboardButton(text=info, callback_data=str(i+1)))
+            options.append(InlineKeyboardButton(text=info, callback_data=str(i+1)+ '|' + str(chat_id)))
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=[options])
         bot.sendMessage(user_id, "Choose card to " + keyboard_type, reply_markup=keyboard)
@@ -127,7 +130,7 @@ def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
         options = []
         for p in players:
             if p != player:
-                options.append(InlineKeyboardButton(text=p, callback_data=p))
+                options.append(InlineKeyboardButton(text=p, callback_data=p + '|' + str(chat_id)))
         keyboard = InlineKeyboardMarkup(inline_keyboard=[options])
         bot.sendMessage(user_id, "Choose a player to hint", reply_markup=keyboard)
 
@@ -136,17 +139,18 @@ def send_keyboard(bot, chat_game, keyboard_type, its_your_turn=True):
         colors = []
         values = []
         for c in hanabi.colors:
-            colors.append(InlineKeyboardButton(text=c, callback_data=c))
+            colors.append(InlineKeyboardButton(text=c, callback_data=c + '|' + str(chat_id)))
         for i in range(1, 6):
-            values.append(InlineKeyboardButton(text=str(i), callback_data=str(i)))
+            values.append(InlineKeyboardButton(text=str(i), callback_data=str(i) + '|' + str(chat_id)))
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=[colors, values])
         bot.sendMessage(user_id, "Choose information to hint", reply_markup=keyboard)        
 
 
-def restart_turn(bot, chat_game):
+def restart_turn(bot, chat_id):
+    chat_game = bot.games[chat_id]
     chat_game.current_action = ''
-    send_keyboard(server.bot, chat_game, "action")
+    send_keyboard(server.bot, chat_id, "action")
 
 
 def handle_game_ending(bot, chat_game):
@@ -171,8 +175,9 @@ def handle_game_ending(bot, chat_game):
     return
 
 
-def complete_processed_action(bot, chat_game, last_player):
+def complete_processed_action(bot, chat_id, last_player):
     # check game ending
+    chat_game = bot.games[chat_id]
     if hanabi.check_state(chat_game.game) != 0:
         handle_game_ending(bot, chat_game)
         return
@@ -180,12 +185,16 @@ def complete_processed_action(bot, chat_game, last_player):
     send_game_views(bot, chat_game)
     chat_game.current_action = ''
     next_player = hanabi.get_active_player_name(chat_game.game)
-    send_keyboard(server.bot, chat_game, "action")
+    send_keyboard(server.bot, chat_id, "action")
 
 
 def handle_keyboard_response(msg):
-    query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
-    print(msg)
+    try:
+        query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
+    except:
+        print("[ERROR]", msg)
+        return
+
     user_id = int(msg['from']['id'])
     chat_id = int(msg['message']['chat']['id'])
 
@@ -193,11 +202,16 @@ def handle_keyboard_response(msg):
         add_player(server, chat_id, user_id, msg['from']['first_name'])
         return
 
-    # TODO: refactor this block into a function
-    chat = server.user_to_chat.get(user_id, None)
-    if not chat: return
+    data, chat_id = data.split('|')
+    chat_id = int(chat_id)
+    print('')
+    print('')
+    print('chat_id', chat_id)
+    print('')
+    print('')
+    print('')
 
-    chat_game = server.games.get(chat, None)
+    chat_game = server.games.get(chat_id, None)
     if not chat_game: return
 
     game = chat_game.game
@@ -213,25 +227,25 @@ def handle_keyboard_response(msg):
         success = hanabi.perform_action(game, active_player, chat_game.current_action)
 
         if success:
-            complete_processed_action(server.bot, chat_game, active_player)
+            complete_processed_action(server.bot, chat_id, active_player)
         else:
-            restart_turn(server.bot, chat_game)
+            restart_turn(server.bot, chat_id)
 
     if chat_game.current_action == 'hint':
         chat_game.current_action += ' ' + data
-        send_keyboard(server.bot, chat_game, "info")
+        send_keyboard(server.bot, chat_id, "info")
 
 
     if data == 'discard':
         if chat_game.current_action != '': return False
         chat_game.current_action = "discard"
-        send_keyboard(server.bot, chat_game, "discard")
+        send_keyboard(server.bot, chat_id, "discard")
         return True
 
     if data == 'play':
         if chat_game.current_action != '': return False
         chat_game.current_action = "play"
-        send_keyboard(server.bot, chat_game, "play")
+        send_keyboard(server.bot, chat_id, "play")
         return True
 
     if data == 'hint':
@@ -240,9 +254,9 @@ def handle_keyboard_response(msg):
         if len(chat_game.player_to_user) == 2:
             i = 1 - game.active_player
             chat_game.current_action += ' ' + game.players[i]
-            send_keyboard(server.bot, chat_game, "info")
+            send_keyboard(server.bot, chat_id, "info")
         else:
-            send_keyboard(server.bot, chat_game, "player")
+            send_keyboard(server.bot, chat_id, "player")
         return True
 
 
@@ -280,27 +294,9 @@ def handle_message(message_object):
     if text == "/S":
         server.games[chat_id] = ChatGame(chat_id, admin=user_id)
         server.bot.sendMessage(chat_id, "A new game has been created.")
-        for name in ['gabriele', 'giacomo', 'fabrizio']:
-            add_player(server, chat_id, user_id, name)
+        for name in ['gabriele', 'giacomo', 'fabrizio', 'caio']:
+            add_player(server, chat_id, user_id, name, allow_repeated_players=True)
         start_game(server, chat_id, user_id)  
-
-
-
-    # Cancel an action with any text
-    chat = server.user_to_chat.get(user_id, None)
-    if not chat: return
-
-    chat_game = server.games[chat]
-    game = chat_game.game
-
-    if not game: return
-
-    active_player = hanabi.get_active_player_name(chat_game.game)
-    active_user_id = chat_game.player_to_user[active_player]
-    if user_id == active_user_id:
-        restart_turn(server.bot, chat_game)
-    else:
-        server.bot.sendMessage(chat_id, "Wait for your turn.")
 
 
 
