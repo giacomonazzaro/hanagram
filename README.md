@@ -7,13 +7,10 @@ Telegram bot to play Hanabi with your friends.
 # Install
 Install hanagram and its dependencies:
 ```bash
-git clone https://github.com/francesconazzaro/telepota.git
+git clone https://github.com/francesconazzaro/telepota.git  # telepota fork that fixes an issue with telegram polls
 git clone https://github.com/giacomonazzaro/hanagram.git
-cd telepota
-pip install .
-cd ../hanagram
-pip install -R requirements.txt
-pip install .
+pip install ./telepota
+pip install -R ./hanagram/requirements.txt
 ```
 
 # Telegram game
