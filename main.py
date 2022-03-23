@@ -271,6 +271,7 @@ def handle_message(message_object):
     
     text = message_object['text'].split('@')[0].strip()
     data = message_object.get('callback_data', None)
+    chat_id = int(chat_id)
     if data:
         print('DATA', data)
 
@@ -320,7 +321,7 @@ def main(token):
     
     print ('*** Telegram bot started ***')
     print ('    Now listening...')
-    MessageLoop(server.bot, {'chat': handle_message, 'callback_query': handle_keyboard_response}).run_as_thread()
+    MessageLoop(server.bot, {'chat_id': handle_message, 'callback_query': handle_keyboard_response}).run_as_thread()
     while 1:
         time.sleep(10)
 
