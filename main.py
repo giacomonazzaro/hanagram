@@ -92,7 +92,7 @@ def start_game(server, chat_id, user_id):
 
 
 def send_keyboard(bot, chat_id, keyboard_type):
-    chat_game = bot.games[chat_id]
+    chat_game = server.games[chat_id]
     player = hanabi.get_active_player_name(chat_game.game)
     user_id = chat_game.player_to_user[player]
     if keyboard_type == "action":
@@ -147,8 +147,8 @@ def send_keyboard(bot, chat_id, keyboard_type):
         bot.sendMessage(user_id, "Choose information to hint", reply_markup=keyboard)        
 
 
-def restart_turn(bot, chat_id):
-    chat_game = bot.games[chat_id]
+def restart_turn(chat_id, user_id):
+    chat_game = server.games[chat_id]
     chat_game.current_action = ''
     send_keyboard(server.bot, chat_id, "action")
 
@@ -177,7 +177,7 @@ def handle_game_ending(bot, chat_game):
 
 def complete_processed_action(bot, chat_id, last_player):
     # check game ending
-    chat_game = bot.games[chat_id]
+    chat_game = server.games[chat_id]
     if hanabi.check_state(chat_game.game) != 0:
         handle_game_ending(bot, chat_game)
         return
@@ -229,7 +229,7 @@ def handle_keyboard_response(msg):
         if success:
             complete_processed_action(server.bot, chat_id, active_player)
         else:
-            restart_turn(server.bot, chat_id)
+            restart_turn(chat_id, user_id)
 
     if chat_game.current_action == 'hint':
         chat_game.current_action += ' ' + data
@@ -283,23 +283,35 @@ def handle_message(message_object):
         server.bot.sendMessage(chat_id, "A new game has been created", reply_markup=keyboard)
         return
 
-    if text == '/end_game':
+    elif text == '/end_game':
         del server.games[chat_id]
         server.bot.sendMessage(chat_id, "The game ended.")
         return
 
-    if text in ['/start', '/restart']:
+    elif text in ['/start', '/restart']:
         start_game(server, chat_id, user_id)    
     
-    if text == "/S":
+    elif text == "/S":
         server.games[chat_id] = ChatGame(chat_id, admin=user_id)
         server.bot.sendMessage(chat_id, "A new game has been created.")
         for name in ['gabriele', 'giacomo', 'fabrizio', 'caio']:
             add_player(server, chat_id, user_id, name, allow_repeated_players=True)
-        start_game(server, chat_id, user_id)  
+        start_game(server, chat_id, user_id)
+    else:
+        return
 
+    chat_game = server.games[chat_id]
+    game = chat_game.game
 
+    if not game: 
+        return
 
+    active_player = hanabi.get_active_player_name(chat_game.game)
+    active_user_id = chat_game.player_to_user[active_player]
+    if user_id == active_user_id:
+        restart_turn(chat_id, user_id)
+    else:
+        server.bot.sendMessage(chat_id, "Wait for your turn.")
 
 
 def main(token):
