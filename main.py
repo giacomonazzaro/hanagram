@@ -321,7 +321,7 @@ def main(token):
     
     print ('*** Telegram bot started ***')
     print ('    Now listening...')
-    MessageLoop(server.bot, {'chat_id': handle_message, 'callback_query': handle_keyboard_response}).run_as_thread()
+    MessageLoop(server.bot, {'chat': handle_message, 'callback_query': handle_keyboard_response}).run_as_thread()
     while 1:
         time.sleep(10)
 
