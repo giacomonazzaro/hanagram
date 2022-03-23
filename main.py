@@ -76,7 +76,6 @@ def start_game(server, chat_id, user_id):
 
     player_to_user = server.games[chat_id].player_to_user
     if len(server.games[chat_id].player_to_user) < 2:
-        print('server.games[chat_id].player_to_user:', server.games[chat_id].player_to_user)
         server.bot.sendMessage(chat_id, "Too few players")
         return
 
@@ -221,12 +220,6 @@ def handle_keyboard_response(msg):
 
     data, chat_id = data.split('|')
     chat_id = int(chat_id)
-    print('')
-    print('')
-    print('chat_id', chat_id)
-    print('')
-    print('')
-    print('')
 
     chat_game = server.games.get(chat_id, None)
     if not chat_game: return
@@ -282,7 +275,6 @@ def handle_keyboard_response(msg):
 
 
 def handle_message(message_object):
-    print(message_object, '\n')
     content_type, chat_type, chat_id = telepot.glance(message_object)
     
     user_id = int(message_object['from']['id'])
