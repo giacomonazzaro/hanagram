@@ -271,6 +271,7 @@ def handle_message(message_object):
     
     text = message_object['text'].split('@')[0].strip()
     data = message_object.get('callback_data', None)
+    chat_id = int(chat_id)
     if data:
         print('DATA', data)
 
@@ -300,6 +301,22 @@ def handle_message(message_object):
 
 
 
+    # Cancel an action with any text
+    chat_game = server.games.get(chat_id, None)
+    if not game: return
+    
+    game = chat_game.game
+    if not game: return
+
+    active_player = hanabi.get_active_player_name(chat_game.game)
+    active_user_id = chat_game.player_to_user[active_player]
+    if user_id == active_user_id:
+        restart_turn(server.bot, chat_game)
+    else:
+        server.bot.sendMessage(chat_id, "Wait for your turn.")
+
+
+
 
 
 def main(token):
@@ -308,7 +325,7 @@ def main(token):
     
     print ('*** Telegram bot started ***')
     print ('    Now listening...')
-    MessageLoop(server.bot, {'chat': handle_message, 'callback_query': handle_keyboard_response}).run_as_thread()
+    MessageLoop(server.bot, {'chat_id': handle_message, 'callback_query': handle_keyboard_response}).run_as_thread()
     while 1:
         time.sleep(10)
 
