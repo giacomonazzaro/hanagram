@@ -325,6 +325,8 @@ def handle_message(message_object):
         for name in test_players[:int(n)]:
             add_player(server, chat_id, user_id, name, allow_repeated_players=True)
         start_game(server, chat_id, user_id)
+    elif text == '/refresh':
+        pass
     else:
         return
 
