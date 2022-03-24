@@ -1,11 +1,19 @@
 import time
 import telepot
 from telepot.loop import MessageLoop
+import itertools
 import sys
 import hanabi
 import draw
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 
+BACKGROUND_COLORS_RGB = itertools.cycle(
+    (20, 20, 20),  # black
+    (100, 20, 20),  # red
+    (10, 50, 10),  # green
+    (15, 30, 74),  # blue
+    (75, 0, 70),  # purple
+)
 
 class ChatGame:
     def __init__(self, chat_id, admin):
@@ -15,6 +23,7 @@ class ChatGame:
         self.user_to_message = {}
         self.current_action = ''
         self.chat_id = chat_id
+        self.background_color = next(BACKGROUND_COLORS_RGB)
 
 class BotServer(object):
     def __init__(self, token):
@@ -56,7 +65,7 @@ def send_game_views(bot, chat_game, last_player=''):
     for name, user_id in chat_game.player_to_user.items():
         # TODO: Send directly generated image, without write to disk.
         filename = str(user_id) + '.png'
-        draw.draw_board_state(chat_game.game, name, filename)
+        draw.draw_board_state(chat_game.game, name, filename, background=chat_game.background_color)
         try:
             with open(filename, 'rb') as image:
                 bot.sendPhoto(user_id, image)
