@@ -7,13 +7,13 @@ import hanabi
 import draw
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 
-BACKGROUND_COLORS_RGB = itertools.cycle(
+BACKGROUND_COLORS_RGB = itertools.cycle((
     (20, 20, 20),  # black
     (100, 20, 20),  # red
     (10, 50, 10),  # green
     (15, 30, 74),  # blue
     (75, 0, 70),  # purple
-)
+))
 
 class ChatGame:
     def __init__(self, chat_id, admin):
@@ -124,7 +124,11 @@ def send_keyboard(bot, chat_id, keyboard_type):
         
         keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
         if chat_game.user_to_message[user_id] is not None:
-            edit_message(chat_game, bot, user_id, player + ", choose an action", keyboard)
+            # quick fix for unkown crash when user try to /refresh
+            try:
+                edit_message(chat_game, bot, user_id, player + ", choose an action", keyboard)
+            except telepot.exception.TelegramError:
+                chat_game.user_to_message[user_id] = bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
         else:
             chat_game.user_to_message[user_id] = bot.sendMessage(user_id, player + ", it's your turn", reply_markup=keyboard)
     
