@@ -77,13 +77,12 @@ def render_card_friend(image, x, y, color, value):
     # if color == 'black': text_fill = (255, 255, 255)
     image.text((x + width/2.5, y + height/8), value, font=text_font, fill=text_fill)
 
-def draw_board_state(game, player_viewing, filename):
+def draw_board_state(game, player_viewing, filename, background=(20, 20, 20)):
     width = int(400 / size)
     height = (width * 16) // 9
     if len(game.players) == 4:
       height += 100
 
-    background = (20, 20, 20)
     image = Image.new('RGB', (width, height), background)
     draw = ImageDraw.Draw(image)
     text_fill = (200, 200, 200)
