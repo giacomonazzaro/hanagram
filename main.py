@@ -54,12 +54,9 @@ def add_player(server, chat_id, user_id, name, allow_repeated_players=False):
 
 def send_game_views(bot, chat_game, last_player=''):
     for name, user_id in chat_game.player_to_user.items():
-        # TODO: Send directly generated image, without write to disk.
-        filename = str(user_id) + '.png'
-        draw.draw_board_state(chat_game.game, name, filename)
+        image = draw.draw_board_state(chat_game.game, name)
         try:
-            with open(filename, 'rb') as image:
-                bot.sendPhoto(user_id, image)
+            bot.sendPhoto(user_id, image)
         except Exception as ex:
             print(ex)
             pass
@@ -173,11 +170,9 @@ def handle_game_ending(bot, chat_game):
     send_game_views(bot, chat_game)
     chat_id = chat_game.chat_id
     game = chat_game.game
-    filename = str(chat_id) + '.png'
-    draw.draw_board_state(chat_game.game, '', filename)
+    image = draw.draw_board_state(chat_game.game)
     try:
-        with open(filename, 'rb') as image:
-            bot.sendPhoto(chat_id, image)
+        bot.sendPhoto(chat_id, image)
     except Exception as ex:
         print(ex)
 

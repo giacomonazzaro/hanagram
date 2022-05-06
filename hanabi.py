@@ -398,7 +398,9 @@ def main():
 
     while True:
         # print_board_state(game, game.players[game.active_player])
-        draw.draw_board_state(game, game.players[game.active_player], 'image.png')
+        image = draw.draw_board_state(game, game.players[game.active_player])
+        with open('image.png', 'wb') as f:
+            f.write(image.read())
 
         result = check_state(game)
         if result > 0:
