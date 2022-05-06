@@ -1,5 +1,6 @@
 import hanabi
 from PIL import Image, ImageDraw, ImageFont
+import io
 
 def rounded_rectangle(image: ImageDraw, xy, corner_radius, fill=None, outline=None):
     upper_left_point = xy[0]
@@ -77,7 +78,7 @@ def render_card_friend(image, x, y, color, value):
     # if color == 'black': text_fill = (255, 255, 255)
     image.text((x + width/2.5, y + height/8), value, font=text_font, fill=text_fill)
 
-def draw_board_state(game, player_viewing, filename):
+def draw_board_state(game, player_viewing):
     width = int(400 / size)
     height = (width * 16) // 9
     if len(game.players) == 4:
@@ -196,8 +197,10 @@ def draw_board_state(game, player_viewing, filename):
     if len(game.players) < 4: y -= 50/size
     else: y -= 40/size
     draw.text((x, y), game.last_action_description, font=text_font, fill=text_fill)
-    
-    image.save(filename)
+    image_file = io.BytesIO()
+    image.save(image_file, "PNG")
+    image_file.seek(0)
+    return image_file
 
 if __name__ == '__main__':
     game = hanabi.Game(['Giacomo', 'Gabriele', 'Fabrizio'])
@@ -213,4 +216,6 @@ if __name__ == '__main__':
     # game.hands['Giacomo'][0].is_value_known = True
     # game.hands['Giacomo'][0].not_values = [1, 2, 3]
     # game.hands['Giacomo'][0].not_colors = ['red', 'blue', 'green']
-    draw_board_state(game, 'Giacomo', 'image.png')
+    image = draw_board_state(game, 'Giacomo')
+    with open('image.png', 'wb') as f:
+        f.write(image.read())
